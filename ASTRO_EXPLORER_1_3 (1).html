@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="theme-color" content="#050816">
+  <meta
+    name="description"
+    content="ASTRO EXPLORER เกมภารกิจสำรวจโลกและธรณีวิทยา"
+  >
+  <title>ASTRO EXPLORER</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Jura:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <style>
+    :root {
+      --bg-0: #02030a;
+      --bg-1: #050816;
+      --bg-2: #09122d;
+      --surface: rgba(8, 17, 41, 0.78);
+      --surface-solid: #0a1330;
+      --surface-soft: rgba(14, 29, 67, 0.62);
+      --line: rgba(114, 221, 255, 0.22);
+      --line-strong: rgba(114, 221, 255, 0.55);
+      --primary: #50e5ff;
+      --primary-2: #4f7cff;
+      --accent: #a66cff;
+      --success: #43f59d;
+      --warning: #ffcf57;
+      --danger: #ff5c7d;
+      --text: #f3fbff;
+      --muted: #9eb1ca;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+      --glow: 0 0 24px rgba(80, 229, 255, 0.26);
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 28px;
+      --duration-fast: 160ms;
+      --duration-normal: 280ms;
+      --duration-slow: 480ms;
+      --ease-standard: cubic-bezier(.2, .8, .2, 1);
+      --ease-emphasized: cubic-bezier(.2, 1, .3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: dark;
+      background: var(--bg-0);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(79, 124, 255, 0.16), transparent 32rem),
+        radial-gradient(circle at 85% 85%, rgba(166, 108, 255, 0.12), transparent 30rem),
+        var(--bg-0);
+      font-family: "Kanit", sans-serif;
+      font-weight: 400;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    button,
+    [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(80, 229, 255, 0.75);
+      outline-offset: 3px;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .space-overlay {
+      position: fixed;
+      z-index: 1;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(2, 3, 10, 0.14), rgba(2, 3, 10, 0.68)),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0,
+          transparent 79px,
+          rgba(80, 229, 255, 0.018) 80px
+        );
+    }
+
+    .space-overlay::before {
+      position: absolute;
+      inset: -50%;
+      content: "";
+      opacity: 0.35;
+      background:
+        radial-gradient(circle, rgba(80, 229, 255, 0.45) 0 1px, transparent 1.5px)
+        0 0 / 80px 80px;
+      animation: star-drift 42s linear infinite;
+    }
+
+    .space-overlay::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background: linear-gradient(
+        105deg,
+        transparent 20%,
+        rgba(80, 229, 255, 0.035) 48%,
+        transparent 72%
+      );
+      transform: translateX(-100%);
+      animation: ambient-scan 12s ease-in-out infinite;
+    }
+
+    #app {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        max(20px, env(safe-area-inset-right))
+        max(20px, env(safe-area-inset-bottom))
+        max(20px, env(safe-area-inset-left));
+    }
+
+    .screen.active {
+      display: flex;
+      animation: screen-enter var(--duration-slow) var(--ease-emphasized) both;
+    }
+
+    .screen.exiting {
+      display: flex;
+      pointer-events: none;
+      animation: screen-exit var(--duration-normal) var(--ease-standard) both;
+    }
+
+    .screen-center {
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .glass-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(145deg, rgba(17, 36, 79, 0.68), rgba(5, 10, 27, 0.86));
+      box-shadow:
+        var(--shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-family: "Jura", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .display-title {
+      margin: 0;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: clamp(2rem, 5vw, 4.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+      text-wrap: balance;
+      text-shadow:
+        0 0 25px rgba(80, 229, 255, 0.25),
+        0 0 65px rgba(79, 124, 255, 0.22);
+    }
+
+    .gradient-text {
+      color: transparent;
+      background: linear-gradient(
+        90deg,
+        #ffffff,
+        var(--primary) 48%,
+        #b9a3ff
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .status-live {
+      position: absolute;
+      clip: rect(0, 0, 0, 0);
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    /* ------------------------------
+       Buttons
+    ------------------------------ */
+
+    .btn {
+      position: relative;
+      display: inline-flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      overflow: hidden;
+      padding: 12px 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--text);
+      background: rgba(12, 25, 57, 0.8);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+      font-weight: 600;
+      line-height: 1.2;
+      text-decoration: none;
+      transition:
+        transform var(--duration-fast) var(--ease-standard),
+        border-color var(--duration-fast) ease,
+        background var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--line-strong);
+      background: rgba(17, 39, 86, 0.9);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      border-color: rgba(80, 229, 255, 0.58);
+      color: #031018;
+      background: linear-gradient(135deg, #8af0ff, #50e5ff 45%, #6991ff);
+      box-shadow:
+        0 14px 38px rgba(80, 229, 255, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      border-color: #cbf9ff;
+      color: #02070c;
+      background: linear-gradient(135deg, #b5f7ff, #61e9ff 45%, #7fa2ff);
+      box-shadow:
+        0 18px 50px rgba(80, 229, 255, 0.32),
+        0 0 0 5px rgba(80, 229, 255, 0.08);
+    }
+
+    .btn-primary::after {
+      position: absolute;
+      top: -70%;
+      left: -40%;
+      width: 22%;
+      height: 240%;
+      content: "";
+      background: rgba(255, 255, 255, 0.5);
+      filter: blur(5px);
+      transform: rotate(20deg);
+      animation: button-shimmer 4.8s ease-in-out infinite;
+    }
+
+    .btn-danger {
+      border-color: rgba(255, 92, 125, 0.28);
+      color: #ffc0cd;
+      background: rgba(95, 18, 41, 0.35);
+    }
+
+    .btn-ghost {
+      border-color: transparent;
+      color: var(--muted);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: none;
+    }
+
+    .btn-lg {
+      min-height: 58px;
+      padding: 16px 26px;
+      border-radius: 17px;
+      font-size: 1.05rem;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .icon-btn {
+      display: inline-grid;
+      width: 46px;
+      height: 46px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      background: rgba(8, 17, 41, 0.7);
+      cursor: pointer;
+      transition:
+        color var(--duration-fast) ease,
+        border-color var(--duration-fast) ease,
+        transform var(--duration-fast) ease;
+    }
+
+    .icon-btn:hover {
+      color: var(--primary);
+      border-color: var(--line-strong);
+      transform: translateY(-2px);
+    }
+
+    /* ------------------------------
+       Login
+    ------------------------------ */
+
+    #screen-login {
+      overflow: hidden;
+    }
+
+    .login-layout {
+      display: grid;
+      width: min(1120px, 100%);
+      align-items: center;
+      gap: clamp(24px, 6vw, 82px);
+      grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.75fr);
+    }
+
+    .login-hero {
+      position: relative;
+      padding: clamp(10px, 4vw, 40px);
+    }
+
+    .planet-emblem {
+      position: relative;
+      display: grid;
+      width: 112px;
+      height: 112px;
+      margin-bottom: 30px;
+      place-items: center;
+      border: 1px solid rgba(80, 229, 255, 0.35);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 28%, #b9f8ff, #4f7cff 38%, #172254 70%);
+      box-shadow:
+        0 0 45px rgba(80, 229, 255, 0.26),
+        inset -12px -15px 22px rgba(0, 0, 0, 0.35);
+      animation: emblem-float 4s ease-in-out infinite;
+    }
+
+    .planet-emblem::before {
+      position: absolute;
+      width: 144px;
+      height: 38px;
+      content: "";
+      border: 5px solid rgba(166, 108, 255, 0.58);
+      border-radius: 50%;
+      transform: rotate(-16deg);
+      box-shadow: 0 0 16px rgba(166, 108, 255, 0.2);
+    }
+
+    .planet-emblem i {
+      z-index: 1;
+      color: #fff;
+      font-size: 2.2rem;
+      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+    }
+
+    .hero-copy {
+      max-width: 650px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      line-height: 1.75;
+    }
+
+    .feature-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .feature-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(80, 229, 255, 0.14);
+      border-radius: 999px;
+      color: #b8c8db;
+      background: rgba(8, 17, 41, 0.46);
+      font-family: "Jura", "Kanit", sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .feature-chip i {
+      color: var(--primary);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 470px;
+      justify-self: end;
+      padding: clamp(24px, 4vw, 40px);
+    }
+
+    .card-heading {
+      margin-bottom: 26px;
+    }
+
+    .card-heading h2 {
+      margin: 0;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      letter-spacing: 0.04em;
+    }
+
+    .card-heading p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #d5e4f3;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    .form-label i {
+      width: 18px;
+      color: var(--primary);
+      text-align: center;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .form-input {
+      width: 100%;
+      min-height: 52px;
+      padding: 13px 15px;
+      border: 1px solid rgba(158, 177, 202, 0.2);
+      border-radius: 13px;
+      color: var(--text);
+      background: rgba(3, 8, 23, 0.72);
+      transition:
+        border-color var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease,
+        background var(--duration-fast) ease;
+    }
+
+    .form-input::placeholder {
+      color: #63738c;
+    }
+
+    .form-input:hover {
+      border-color: rgba(80, 229, 255, 0.34);
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      background: rgba(4, 12, 30, 0.92);
+      box-shadow: 0 0 0 4px rgba(80, 229, 255, 0.09);
+      outline: none;
+    }
+
+    .form-input[aria-invalid="true"] {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255, 92, 125, 0.08);
+    }
+
+    .form-error {
+      min-height: 20px;
+      margin: 6px 0 0;
+      color: #ff9baf;
+      font-size: 0.82rem;
+    }
+
+    .login-submit {
+      margin-top: 8px;
+    }
+
+    .privacy-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin: 16px 0 0;
+      color: #71839a;
+      font-size: 0.76rem;
+      line-height: 1.5;
+    }
+
+    .privacy-note i {
+      margin-top: 3px;
+      color: var(--primary);
+    }
+
+    .login-card.login-success {
+      border-color: rgba(67, 245, 157, 0.72);
+      animation: login-success 650ms var(--ease-emphasized);
+    }
+
+    /* ------------------------------
+       Menu
+    ------------------------------ */
+
+    #screen-menu {
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-shell {
+      width: min(1180px, 100%);
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .menu-brand h1 {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.5rem, 4vw, 3rem);
+      letter-spacing: 0.05em;
+    }
+
+    .player-pill {
+      display: flex;
+      min-width: 220px;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 15px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(8, 17, 41, 0.72);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    .player-avatar {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 13px;
+      color: #06121b;
+      background: linear-gradient(135deg, var(--primary), #9f8cff);
+      box-shadow: 0 0 20px rgba(80, 229, 255, 0.22);
+    }
+
+    .player-meta {
+      min-width: 0;
+    }
+
+    .player-name {
+      display: block;
+      overflow: hidden;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-id {
+      color: var(--muted);
+      font-family: "Jura", sans-serif;
+      font-size: 0.8rem;
+    }
+
+    .menu-grid {
+      display: grid;
+      gap: 22px;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+    }
+
+    .mission-card {
+      position: relative;
+      min-height: 480px;
+      overflow: hidden;
+      padding: clamp(25px, 5vw, 48px);
+    }
+
+    .mission-card::before {
+      position: absolute;
+      right: -110px;
+      bottom: -130px;
+      width: 430px;
+      height: 430px;
+      content: "";
+      border: 1px solid rgba(80, 229, 255, 0.16);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(173, 247, 255, 0.9), transparent 4%),
+        radial-gradient(circle at 40% 40%, #4f7cff, #222e73 45%, #080d24 72%);
+      box-shadow:
+        0 0 80px rgba(79, 124, 255, 0.25),
+        inset -40px -45px 80px rgba(0, 0, 0, 0.55);
+      opacity: 0.7;
+      transform: rotate(-10deg);
+    }
+
+    .mission-card::after {
+      position: absolute;
+      right: 20px;
+      bottom: 35px;
+      width: 290px;
+      height: 70px;
+      content: "";
+      border: 4px solid rgba(166, 108, 255, 0.36);
+      border-radius: 50%;
+      transform: rotate(-13deg);
+    }
+
+    .mission-content {
+      position: relative;
+      z-index: 1;
+      max-width: 660px;
+    }
+
+    .mission-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 8px 12px;
+      border: 1px solid rgba(67, 245, 157, 0.25);
+      border-radius: 999px;
+      color: #94fbc4;
+      background: rgba(30, 104, 71, 0.18);
+      font-family: "Jura", "Kanit", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .mission-tag .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 0 rgba(67, 245, 157, 0.45);
+      animation: status-pulse 2s ease-out infinite;
+    }
+
+    .mission-title {
+      margin: 0 0 14px;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: clamp(1.8rem, 4vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: 0.02em;
+    }
+
+    .mission-description {
+      max-width: 600px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.98rem, 1.8vw, 1.15rem);
+      line-height: 1.75;
+    }
+
+    .mission-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 25px 0 30px;
+    }
+
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border: 1px solid rgba(158, 177, 202, 0.14);
+      border-radius: 12px;
+      color: #c1cede;
+      background: rgba(2, 8, 24, 0.45);
+      font-size: 0.86rem;
+    }
+
+    .stat-chip i {
+      color: var(--primary);
+    }
+
+    .mission-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .mini-card {
+      padding: 21px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: rgba(8, 17, 41, 0.7);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    .mini-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 15px;
+      font-size: 1rem;
+    }
+
+    .mini-card h3 i {
+      color: var(--primary);
+    }
+
+    .readiness-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .readiness-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #c5d1df;
+      font-size: 0.9rem;
+    }
+
+    .readiness-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .readiness-status::before {
+      width: 8px;
+      height: 8px;
+      content: "";
+      border-radius: 50%;
+      background: #718096;
+    }
+
+    .readiness-status.ready {
+      color: #8bf7bd;
+    }
+
+    .readiness-status.ready::before {
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(67, 245, 157, 0.55);
+    }
+
+    .high-score {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .high-score-value {
+      color: var(--text);
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .high-score-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    /* ------------------------------
+       How to play
+    ------------------------------ */
+
+    #screen-howto {
+      align-items: center;
+      justify-content: center;
+    }
+
+    .howto-shell {
+      width: min(1040px, 100%);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+    }
+
+    .howto-card {
+      padding: clamp(22px, 4vw, 38px);
+    }
+
+    .steps-grid {
+      display: grid;
+      gap: 15px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .step-card {
+      position: relative;
+      padding: 21px 17px;
+      border: 1px solid rgba(158, 177, 202, 0.14);
+      border-radius: 17px;
+      background: rgba(3, 10, 28, 0.56);
+      transition:
+        transform var(--duration-normal) var(--ease-standard),
+        border-color var(--duration-normal) ease;
+    }
+
+    .step-card:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-4px);
+    }
+
+    .step-number {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 15px;
+      place-items: center;
+      border-radius: 12px;
+      color: #031018;
+      background: linear-gradient(135deg, var(--primary), #9891ff);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .step-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+
+    .safety-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid rgba(255, 207, 87, 0.22);
+      border-radius: 15px;
+      color: #ffe4a0;
+      background: rgba(106, 75, 14, 0.16);
+      line-height: 1.6;
+    }
+
+    .safety-box i {
+      margin-top: 4px;
+      color: var(--warning);
+    }
+
+    .control-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .control-option {
+      display: flex;
+      flex: 1 1 220px;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(10, 22, 51, 0.55);
+    }
+
+    .control-option i {
+      width: 28px;
+      color: var(--primary);
+      font-size: 1.25rem;
+      text-align: center;
+    }
+
+    .control-option strong {
+      display: block;
+      font-size: 0.92rem;
+    }
+
+    .control-option span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    /* ------------------------------
+       Gameplay
+    ------------------------------ */
+
+    #screen-game {
+      position: relative;
+      flex-direction: column;
+      gap: 15px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at center, rgba(7, 19, 49, 0.42), transparent 68%);
+    }
+
+    .game-hud {
+      display: grid;
+      width: min(1320px, 100%);
+      align-self: center;
+      align-items: center;
+      gap: 12px;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-group.end {
+      justify-content: flex-end;
+    }
+
+    .hud-card {
+      display: flex;
+      min-height: 50px;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(4, 11, 29, 0.76);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud-card i {
+      color: var(--primary);
+    }
+
+    .hud-label {
+      color: var(--muted);
+      font-family: "Jura", "Kanit", sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hud-value {
+      display: block;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .energy-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .energy-heart {
+      color: var(--danger);
+      filter: drop-shadow(0 0 8px rgba(255, 92, 125, 0.25));
+      transition:
+        opacity var(--duration-normal) ease,
+        transform var(--duration-normal) var(--ease-emphasized);
+    }
+
+    .energy-heart.lost {
+      opacity: 0.18;
+      transform: scale(0.72);
+      filter: none;
+    }
+
+    .timer-wrap {
+      position: relative;
+      display: grid;
+      width: 84px;
+      height: 84px;
+      place-items: center;
+    }
+
+    .timer-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .timer-track,
+    .timer-progress {
+      fill: none;
+      stroke-width: 7;
+    }
+
+    .timer-track {
+      stroke: rgba(158, 177, 202, 0.14);
+    }
+
+    .timer-progress {
+      stroke: var(--primary);
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 6px rgba(80, 229, 255, 0.45));
+      transition:
+        stroke-dashoffset 1s linear,
+        stroke var(--duration-normal) ease;
+    }
+
+    .timer-number {
+      position: relative;
+      z-index: 1;
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .timer-wrap.warning .timer-progress {
+      stroke: var(--warning);
+      filter: drop-shadow(0 0 6px rgba(255, 207, 87, 0.45));
+    }
+
+    .timer-wrap.danger .timer-progress {
+      stroke: var(--danger);
+      filter: drop-shadow(0 0 8px rgba(255, 92, 125, 0.5));
+    }
+
+    .timer-wrap.danger {
+      animation: timer-pulse 1s ease-in-out infinite;
+    }
+
+    .game-stage {
+      display: grid;
+      width: min(1320px, 100%);
+      min-height: 0;
+      flex: 1;
+      align-self: center;
+      align-items: stretch;
+      gap: 15px;
+      grid-template-columns: minmax(0, 1fr) 235px;
+    }
+
+    .question-panel {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(18px, 3vw, 35px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(145deg, rgba(8, 20, 50, 0.78), rgba(2, 7, 20, 0.84));
+      box-shadow: var(--shadow);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+
+    #question-container.question-enter {
+      animation: question-enter 440ms var(--ease-emphasized) both;
+    }
+
+    #question-container.question-exit {
+      animation: question-exit 240ms var(--ease-standard) both;
+    }
+
+    .question-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid rgba(166, 108, 255, 0.25);
+      border-radius: 999px;
+      color: #d3c5ff;
+      background: rgba(87, 45, 145, 0.18);
+      font-size: 0.75rem;
+    }
+
+    .question-progress {
+      color: var(--muted);
+      font-family: "Jura", sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    #question-text {
+      max-width: 1050px;
+      margin: 0 auto clamp(18px, 3vh, 30px);
+      font-size: clamp(1.12rem, 2.6vw, 2rem);
+      font-weight: 600;
+      line-height: 1.45;
+      text-align: center;
+      text-wrap: balance;
+    }
+
+    #ui-choices {
+      display: grid;
+      gap: clamp(10px, 1.6vw, 18px);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .choice-card {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      min-height: 145px;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 20px 16px;
+      border: 1px solid rgba(158, 177, 202, 0.2);
+      border-radius: 19px;
+      color: var(--text);
+      background:
+        linear-gradient(155deg, rgba(17, 37, 80, 0.72), rgba(5, 13, 34, 0.78));
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+      font-size: clamp(0.92rem, 1.55vw, 1.12rem);
+      line-height: 1.55;
+      text-align: center;
+      transition:
+        transform var(--duration-fast) var(--ease-standard),
+        border-color var(--duration-fast) ease,
+        background var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease,
+        opacity var(--duration-fast) ease;
+    }
+
+    .choice-card:hover:not(:disabled),
+    .choice-card.focused {
+      z-index: 1;
+      border-color: rgba(80, 229, 255, 0.7);
+      background:
+        linear-gradient(155deg, rgba(23, 58, 112, 0.85), rgba(7, 21, 52, 0.9));
+      box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.25),
+        0 0 0 4px rgba(80, 229, 255, 0.07),
+        0 0 25px rgba(80, 229, 255, 0.15);
+      transform: translateY(-3px) scale(1.018);
+    }
+
+    .choice-card:disabled {
+      cursor: default;
+    }
+
+    .choice-card.dimmed {
+      opacity: 0.38;
+    }
+
+    .choice-letter {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border: 1px solid rgba(80, 229, 255, 0.24);
+      border-radius: 9px;
+      color: var(--primary);
+      background: rgba(3, 10, 28, 0.55);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .choice-card.correct {
+      border-color: rgba(67, 245, 157, 0.82);
+      color: #eafff3;
+      background:
+        linear-gradient(145deg, rgba(24, 119, 76, 0.75), rgba(5, 47, 34, 0.9));
+      box-shadow: 0 0 30px rgba(67, 245, 157, 0.2);
+      animation: correct-pop 520ms var(--ease-emphasized);
+    }
+
+    .choice-card.wrong {
+      border-color: rgba(255, 92, 125, 0.82);
+      color: #fff0f3;
+      background:
+        linear-gradient(145deg, rgba(125, 28, 53, 0.78), rgba(53, 8, 25, 0.92));
+      animation: wrong-shake 320ms ease;
+    }
+
+    .choice-confirm-progress {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .choice-confirm-progress span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      box-shadow: 0 0 10px rgba(80, 229, 255, 0.6);
+    }
+
+    .game-side {
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .camera-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #030715;
+      aspect-ratio: 4 / 3;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    #input-video {
+      display: none;
+    }
+
+    #pose-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .camera-placeholder {
+      position: absolute;
+      display: grid;
+      inset: 0;
+      place-content: center;
+      gap: 8px;
+      color: var(--muted);
+      background:
+        radial-gradient(circle, rgba(80, 229, 255, 0.08), transparent 70%),
+        #030715;
+      text-align: center;
+    }
+
+    .camera-placeholder i {
+      color: var(--primary);
+      font-size: 1.5rem;
+    }
+
+    .camera-placeholder span {
+      font-size: 0.78rem;
+    }
+
+    .camera-status {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      left: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 9px;
+      color: #cbd7e4;
+      background: rgba(2, 6, 17, 0.78);
+      font-size: 0.7rem;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    .camera-status i {
+      color: var(--warning);
+    }
+
+    .camera-status.detected i {
+      color: var(--success);
+    }
+
+    .game-tip {
+      flex: 1;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      color: var(--muted);
+      background: rgba(4, 11, 29, 0.7);
+      font-size: 0.8rem;
+      line-height: 1.55;
+    }
+
+    .game-tip strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--text);
+    }
+
+    .key-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    kbd {
+      display: inline-grid;
+      min-width: 28px;
+      min-height: 27px;
+      place-items: center;
+      padding: 3px 7px;
+      border: 1px solid rgba(158, 177, 202, 0.25);
+      border-bottom-width: 3px;
+      border-radius: 7px;
+      color: #d7e4f1;
+      background: rgba(15, 30, 64, 0.85);
+      font-family: "Jura", sans-serif;
+      font-size: 0.72rem;
+    }
+
+    #player-indicator {
+      position: fixed;
+      z-index: 20;
+      bottom: 17px;
+      left: 50%;
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      border-radius: 50%;
+      color: #031018;
+      background: linear-gradient(135deg, var(--primary), #9d8cff);
+      box-shadow:
+        0 0 0 7px rgba(80, 229, 255, 0.08),
+        0 0 28px rgba(80, 229, 255, 0.36);
+      pointer-events: none;
+      transform: translateX(-50%);
+      transition:
+        left 90ms linear,
+        transform var(--duration-fast) ease,
+        opacity var(--duration-fast) ease;
+    }
+
+    #player-indicator.hidden-indicator {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.65);
+    }
+
+    .feedback-toast {
+      position: fixed;
+      z-index: 60;
+      top: 50%;
+      left: 50%;
+      display: flex;
+      width: min(560px, calc(100% - 34px));
+      align-items: center;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(4, 11, 29, 0.94);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -44%) scale(0.94);
+      transition:
+        opacity var(--duration-normal) ease,
+        transform var(--duration-normal) var(--ease-emphasized);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    .feedback-toast.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .feedback-icon {
+      display: grid;
+      width: 50px;
+      height: 50px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 15px;
+      font-size: 1.25rem;
+    }
+
+    .feedback-toast.success {
+      border-color: rgba(67, 245, 157, 0.4);
+    }
+
+    .feedback-toast.success .feedback-icon {
+      color: #071c11;
+      background: var(--success);
+    }
+
+    .feedback-toast.error {
+      border-color: rgba(255, 92, 125, 0.4);
+    }
+
+    .feedback-toast.error .feedback-icon {
+      color: #21050d;
+      background: var(--danger);
+    }
+
+    .feedback-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .feedback-desc {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.83rem;
+      line-height: 1.45;
+    }
+
+    /* ------------------------------
+       Countdown
+    ------------------------------ */
+
+    #countdown-overlay {
+      position: fixed;
+      z-index: 100;
+      display: none;
+      inset: 0;
+      place-items: center;
+      background:
+        radial-gradient(circle, rgba(79, 124, 255, 0.22), rgba(2, 3, 10, 0.94) 65%);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    #countdown-overlay.active {
+      display: grid;
+    }
+
+    #countdown-value {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(6rem, 25vw, 15rem);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow:
+        0 0 30px rgba(80, 229, 255, 0.45),
+        0 0 90px rgba(79, 124, 255, 0.35);
+      animation: countdown-pop 800ms var(--ease-emphasized) both;
+    }
+
+    /* ------------------------------
+       Result
+    ------------------------------ */
+
+    #screen-result {
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+    }
+
+    .result-shell {
+      width: min(980px, 100%);
+      padding: clamp(23px, 4vw, 42px);
+      text-align: center;
+    }
+
+    .result-emblem {
+      position: relative;
+      display: grid;
+      width: 94px;
+      height: 94px;
+      margin: 0 auto 18px;
+      place-items: center;
+      border: 1px solid rgba(255, 207, 87, 0.5);
+      border-radius: 50%;
+      color: #281b02;
+      background: linear-gradient(145deg, #fff4ad, #ffcf57 50%, #d78a15);
+      box-shadow:
+        0 0 45px rgba(255, 207, 87, 0.26),
+        inset 0 2px 0 rgba(255, 255, 255, 0.5);
+      font-size: 2rem;
+      animation: result-emblem 720ms var(--ease-emphasized) both;
+    }
+
+    .result-title {
+      margin: 0;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      line-height: 1.1;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 35px rgba(80, 229, 255, 0.22);
+    }
+
+    .result-subtitle {
+      margin: 10px 0 25px;
+      color: var(--muted);
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 24px;
+      padding: 9px 16px;
+      border: 1px solid rgba(166, 108, 255, 0.34);
+      border-radius: 999px;
+      color: #e4d9ff;
+      background: rgba(102, 55, 167, 0.2);
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .result-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .result-stat {
+      padding: 19px 12px;
+      border: 1px solid rgba(158, 177, 202, 0.16);
+      border-radius: 17px;
+      background: rgba(4, 12, 31, 0.64);
+    }
+
+    .result-stat i {
+      margin-bottom: 10px;
+      color: var(--primary);
+      font-size: 1.15rem;
+    }
+
+    .result-stat-value {
+      display: block;
+      font-family: "Orbitron", "Kanit", sans-serif;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      font-weight: 700;
+    }
+
+    .result-stat-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .score-breakdown {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(4, 12, 31, 0.5);
+      text-align: left;
+    }
+
+    .score-breakdown h3 {
+      margin: 0 0 13px;
+      font-size: 0.95rem;
+    }
+
+    .breakdown-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(158, 177, 202, 0.09);
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .breakdown-row:last-child {
+      border-bottom: 0;
+    }
+
+    .breakdown-row strong {
+      color: var(--text);
+      font-family: "Jura", sans-serif;
+    }
+
+    .save-status {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .save-status.saving i {
+      color: var(--primary);
+      animation: spin 800ms linear infinite;
+    }
+
+    .save-status.saved {
+      color: var(--success);
+    }
+
+    .save-status.failed {
+      color: #ff9bb0;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 11px;
+      margin-top: 18px;
+    }
+
+    /* ------------------------------
+       Modal
+    ------------------------------ */
+
+    .modal-backdrop {
+      position: fixed;
+      z-index: 120;
+      display: none;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(1, 3, 10, 0.78);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: fade-in var(--duration-normal) ease both;
+    }
+
+    .modal-card {
+      width: min(480px, 100%);
+      padding: 25px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--surface-solid);
+      box-shadow: var(--shadow);
+      animation: modal-enter var(--duration-normal) var(--ease-emphasized) both;
+    }
+
+    .modal-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+    }
+
+    .modal-card p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ------------------------------
+       Effects and animations
+    ------------------------------ */
+
+    .particle {
+      position: fixed;
+      z-index: 110;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      pointer-events: none;
+      animation: particle-fall 1.8s ease-out forwards;
+    }
+
+    .score-pop {
+      position: fixed;
+      z-index: 80;
+      color: var(--success);
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      pointer-events: none;
+      text-shadow: 0 0 14px rgba(67, 245, 157, 0.5);
+      animation: score-float 900ms var(--ease-emphasized) forwards;
+    }
+
+    @keyframes screen-enter {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes screen-exit {
+      to {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.99);
+      }
+    }
+
+    @keyframes star-drift {
+      to {
+        transform: translate3d(120px, 100px, 0) rotate(1deg);
+      }
+    }
+
+    @keyframes ambient-scan {
+      0%, 70%, 100% {
+        transform: translateX(-120%);
+      }
+      85% {
+        transform: translateX(120%);
+      }
+    }
+
+    @keyframes emblem-float {
+      0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+      50% {
+        transform: translateY(-9px) rotate(2deg);
+      }
+    }
+
+    @keyframes button-shimmer {
+      0%, 68%, 100% {
+        left: -45%;
+      }
+      82% {
+        left: 125%;
+      }
+    }
+
+    @keyframes status-pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(67, 245, 157, 0.45);
+      }
+      70%, 100% {
+        box-shadow: 0 0 0 9px rgba(67, 245, 157, 0);
+      }
+    }
+
+    @keyframes login-success {
+      0%, 100% {
+        box-shadow: var(--shadow);
+      }
+      50% {
+        box-shadow:
+          var(--shadow),
+          0 0 45px rgba(67, 245, 157, 0.28);
+      }
+    }
+
+    @keyframes timer-pulse {
+      50% {
+        transform: scale(1.055);
+      }
+    }
+
+    @keyframes question-enter {
+      from {
+        opacity: 0;
+        transform: translateX(24px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes question-exit {
+      to {
+        opacity: 0;
+        transform: translateX(-18px);
+      }
+    }
+
+    @keyframes correct-pop {
+      50% {
+        transform: scale(1.035);
+      }
+    }
+
+    @keyframes wrong-shake {
+      20%, 60% {
+        transform: translateX(-6px);
+      }
+      40%, 80% {
+        transform: translateX(6px);
+      }
+    }
+
+    @keyframes countdown-pop {
+      0% {
+        opacity: 0;
+        transform: scale(1.6);
+      }
+      25% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      80% {
+        opacity: 1;
+        transform: scale(0.92);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+    }
+
+    @keyframes result-emblem {
+      from {
+        opacity: 0;
+        transform: scale(0.4) rotate(-35deg);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes modal-enter {
+      from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+    }
+
+    @keyframes particle-fall {
+      to {
+        opacity: 0;
+        transform:
+          translate3d(var(--particle-x), var(--particle-y), 0)
+          rotate(var(--particle-r));
+      }
+    }
+
+    @keyframes score-float {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 8px) scale(0.8);
+      }
+      25% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1.08);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -55px) scale(1);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ------------------------------
+       Responsive
+    ------------------------------ */
+
+    @media (max-width: 980px) {
+      .login-layout {
+        max-width: 680px;
+        grid-template-columns: 1fr;
+      }
+
+      .login-hero {
+        padding: 0;
+        text-align: center;
+      }
+
+      .planet-emblem {
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .feature-row {
+        justify-content: center;
+      }
+
+      .login-card {
+        max-width: none;
+        justify-self: stretch;
+      }
+
+      .menu-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mission-card {
+        min-height: 420px;
+      }
+
+      .steps-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .game-stage {
+        grid-template-columns: 1fr;
+      }
+
+      .game-side {
+        display: grid;
+        grid-template-columns: 170px 1fr;
+      }
+
+      .camera-card {
+        width: 170px;
+      }
+
+      .result-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .screen {
+        padding:
+          max(13px, env(safe-area-inset-top))
+          max(13px, env(safe-area-inset-right))
+          max(13px, env(safe-area-inset-bottom))
+          max(13px, env(safe-area-inset-left));
+      }
+
+      .login-hero {
+        display: none;
+      }
+
+      .menu-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .player-pill {
+        min-width: 0;
+      }
+
+      .mission-card {
+        min-height: 0;
+      }
+
+      .mission-card::before,
+      .mission-card::after {
+        opacity: 0.25;
+      }
+
+      .game-hud {
+        grid-template-columns: 1fr auto;
+      }
+
+      .game-hud .hud-group.end {
+        display: none;
+      }
+
+      .hud-card.optional-mobile {
+        display: none;
+      }
+
+      .timer-wrap {
+        width: 70px;
+        height: 70px;
+      }
+
+      #ui-choices {
+        grid-template-columns: 1fr;
+      }
+
+      .choice-card {
+        min-height: 86px;
+      }
+
+      .game-side {
+        display: none;
+      }
+
+      #player-indicator {
+        bottom: 10px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .steps-grid,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mission-actions,
+      .result-actions {
+        flex-direction: column;
+      }
+
+      .mission-actions .btn,
+      .result-actions .btn {
+        width: 100%;
+      }
+
+      .section-header {
+        align-items: center;
+      }
+
+      .question-panel {
+        padding: 14px;
+      }
+
+      #question-text {
+        font-size: 1rem;
+      }
+
+      .choice-card {
+        min-height: 76px;
+        padding: 15px 42px;
+        font-size: 0.87rem;
+      }
+
+      .result-stat {
+        display: grid;
+        align-items: center;
+        gap: 5px 12px;
+        grid-template-columns: auto 1fr;
+        text-align: left;
+      }
+
+      .result-stat i {
+        margin: 0;
+        grid-row: span 2;
+      }
+    }
+
+    @media (orientation: portrait) and (max-width: 720px) {
+      #screen-game {
+        overflow-y: auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="space-overlay" aria-hidden="true"></div>
+
+  <div id="app">
+    <div
+      id="app-status"
+      class="status-live"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+    <!-- LOGIN SCREEN -->
+    <section
+      id="screen-login"
+      class="screen screen-center active"
+      aria-labelledby="login-title"
+    >
+      <div class="login-layout">
+        <div class="login-hero">
+          <div class="planet-emblem" aria-hidden="true">
+            <i class="fa-solid fa-shuttle-space"></i>
+          </div>
+
+          <p class="eyebrow">Geology Learning Mission</p>
+          <h1 id="login-title" class="display-title gradient-text">
+            ASTRO<br>EXPLORER
+          </h1>
+          <p class="hero-copy">
+            เตรียมเข้าสู่ภารกิจสำรวจโครงสร้างโลก การเคลื่อนที่ของแผ่นธรณี
+            แผ่นดินไหว ภูเขาไฟ และภัยพิบัติ ผ่านเกมตอบคำถามแบบโต้ตอบ
+          </p>
+
+          <div class="feature-row" aria-label="คุณสมบัติของเกม">
+            <span class="feature-chip">
+              <i class="fa-solid fa-person-running"></i>
+              Pose Control
+            </span>
+            <span class="feature-chip">
+              <i class="fa-solid fa-keyboard"></i>
+              Keyboard
+            </span>
+            <span class="feature-chip">
+              <i class="fa-solid fa-mobile-screen"></i>
+              Touch
+            </span>
+          </div>
+        </div>
+
+        <div id="login-card" class="login-card glass-card">
+          <div class="card-heading">
+            <p class="eyebrow">Crew Authentication</p>
+            <h2>ยืนยันตัวตนนักสำรวจ</h2>
+            <p>กรอกข้อมูลก่อนเริ่มภารกิจ ระบบจะจำข้อมูลไว้ในอุปกรณ์นี้</p>
+          </div>
+
+          <form id="login-form" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="inp-studentid">
+                <i class="fa-solid fa-id-card"></i>
+                รหัสนักเรียน
+              </label>
+              <div class="input-wrap">
+                <input
+                  id="inp-studentid"
+                  class="form-input"
+                  name="studentId"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="20"
+                  placeholder="เช่น 12345"
+                  aria-describedby="error-studentid"
+                  required
+                >
+              </div>
+              <p id="error-studentid" class="form-error"></p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inp-firstname">
+                <i class="fa-solid fa-user-astronaut"></i>
+                ชื่อ
+              </label>
+              <div class="input-wrap">
+                <input
+                  id="inp-firstname"
+                  class="form-input"
+                  name="firstName"
+                  type="text"
+                  autocomplete="given-name"
+                  maxlength="40"
+                  placeholder="ชื่อของนักเรียน"
+                  aria-describedby="error-firstname"
+                  required
+                >
+              </div>
+              <p id="error-firstname" class="form-error"></p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inp-lastname">
+                <i class="fa-solid fa-signature"></i>
+                นามสกุล
+              </label>
+              <div class="input-wrap">
+                <input
+                  id="inp-lastname"
+                  class="form-input"
+                  name="lastName"
+                  type="text"
+                  autocomplete="family-name"
+                  maxlength="40"
+                  placeholder="นามสกุลของนักเรียน"
+                  aria-describedby="error-lastname"
+                  required
+                >
+              </div>
+              <p id="error-lastname" class="form-error"></p>
+            </div>
+
+            <button
+              id="btn-login"
+              class="btn btn-primary btn-lg btn-block login-submit"
+              type="submit"
+            >
+              <i class="fa-solid fa-right-to-bracket"></i>
+              <span>เข้าสู่ระบบยาน</span>
+            </button>
+
+            <p class="privacy-note">
+              <i class="fa-solid fa-shield-halved"></i>
+              ข้อมูลชื่อและรหัสนักเรียนใช้เพื่อแสดงผลและบันทึกคะแนนเท่านั้น
+              กรุณาอย่าใส่รหัสผ่านหรือข้อมูลลับ
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN MENU -->
+    <section
+      id="screen-menu"
+      class="screen"
+      aria-labelledby="menu-title"
+    >
+      <div class="menu-shell">
+        <header class="menu-header">
+          <div class="menu-brand">
+            <p class="eyebrow">Mission Control</p>
+            <h1 id="menu-title" class="gradient-text">ASTRO EXPLORER</h1>
+          </div>
+
+          <div class="player-pill">
+            <div class="player-avatar" aria-hidden="true">
+              <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <div class="player-meta">
+              <span id="menu-player-name" class="player-name">นักสำรวจ</span>
+              <span id="menu-player-id" class="player-id">ID: -</span>
+            </div>
+            <button
+              id="btn-logout"
+              class="icon-btn"
+              type="button"
+              aria-label="ออกจากระบบ"
+              title="ออกจากระบบ"
+            >
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+          </div>
+        </header>
+
+        <div class="menu-grid">
+          <article class="mission-card glass-card">
+            <div class="mission-content">
+              <div class="mission-tag">
+                <span class="pulse-dot"></span>
+                MISSION AVAILABLE
+              </div>
+
+              <h2 class="mission-title">
+                ภารกิจสำรวจ<br>
+                <span class="gradient-text">ดาวเคราะห์โลก</span>
+              </h2>
+
+              <p class="mission-description">
+                วิเคราะห์ข้อมูลทางธรณีวิทยา ตอบคำถามก่อนเวลาหมด
+                และรักษาพลังงานของยานให้เหลือจนจบภารกิจ
+              </p>
+
+              <div class="mission-stats">
+                <span class="stat-chip">
+                  <i class="fa-solid fa-list-check"></i>
+                  10 คำถามต่อรอบ
+                </span>
+                <span class="stat-chip">
+                  <i class="fa-solid fa-clock"></i>
+                  30 วินาทีต่อข้อ
+                </span>
+                <span class="stat-chip">
+                  <i class="fa-solid fa-heart-pulse"></i>
+                  3 พลังงาน
+                </span>
+              </div>
+
+              <div class="mission-actions">
+                <button
+                  id="btn-start"
+                  class="btn btn-primary btn-lg"
+                  type="button"
+                >
+                  <i class="fa-solid fa-rocket"></i>
+                  เริ่มภารกิจ
+                </button>
+
+                <button
+                  id="btn-howto"
+                  class="btn btn-lg"
+                  type="button"
+                >
+                  <i class="fa-regular fa-circle-question"></i>
+                  วิธีเล่น
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <aside class="side-panel">
+            <div class="mini-card">
+              <h3>
+                <i class="fa-solid fa-satellite-dish"></i>
+                ความพร้อมของระบบ
+              </h3>
+
+              <div class="readiness-list">
+                <div class="readiness-item">
+                  <span>ระบบเกม</span>
+                  <span class="readiness-status ready">พร้อม</span>
+                </div>
+                <div class="readiness-item">
+                  <span>กล้องตรวจจับ</span>
+                  <span id="menu-camera-status" class="readiness-status">
+                    ยังไม่ได้เปิด
+                  </span>
+                </div>
+                <div class="readiness-item">
+                  <span>Keyboard / Touch</span>
+                  <span class="readiness-status ready">พร้อม</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mini-card">
+              <h3>
+                <i class="fa-solid fa-trophy"></i>
+                คะแนนสูงสุด
+              </h3>
+
+              <div class="high-score">
+                <div>
+                  <div id="menu-high-score" class="high-score-value">0</div>
+                  <div class="high-score-label">คะแนนสูงสุดบนอุปกรณ์นี้</div>
+                </div>
+                <i
+                  class="fa-solid fa-medal"
+                  style="color: var(--warning); font-size: 2rem;"
+                  aria-hidden="true"
+                ></i>
+              </div>
+            </div>
+
+            <button
+              id="btn-settings"
+              class="btn btn-block"
+              type="button"
+            >
+              <i class="fa-solid fa-sliders"></i>
+              ตั้งค่าการเล่น
+            </button>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW TO PLAY -->
+    <section
+      id="screen-howto"
+      class="screen"
+      aria-labelledby="howto-title"
+    >
+      <div class="howto-shell">
+        <header class="section-header">
+          <div>
+            <p class="eyebrow">Training Module</p>
+            <h2 id="howto-title">วิธีควบคุมภารกิจ</h2>
+          </div>
+
+          <button
+            id="btn-howto-back"
+            class="icon-btn"
+            type="button"
+            aria-label="กลับไปหน้าเมนู"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </header>
+
+        <div class="howto-card glass-card">
+          <div class="steps-grid">
+            <article class="step-card">
+              <div class="step-number">01</div>
+              <h3>จัดตำแหน่ง</h3>
+              <p>
+                ยืนให้เห็นร่างกายส่วนบนและอยู่ห่างจากกล้องอย่างเหมาะสม
+              </p>
+            </article>
+
+            <article class="step-card">
+              <div class="step-number">02</div>
+              <h3>เลือกคำตอบ</h3>
+              <p>
+                ขยับตัวซ้าย กลาง หรือขวา เพื่อเลื่อนไปยังตัวเลือกที่ต้องการ
+              </p>
+            </article>
+
+            <article class="step-card">
+              <div class="step-number">03</div>
+              <h3>ยืนยันคำตอบ</h3>
+              <p>
+                กระโดดเบา ๆ หรือกด Enter/Space เพื่อยืนยันคำตอบที่เลือก
+              </p>
+            </article>
+
+            <article class="step-card">
+              <div class="step-number">04</div>
+              <h3>ทำคะแนน</h3>
+              <p>
+                ตอบให้ถูกและรวดเร็วเพื่อรับโบนัส พร้อมรักษาพลังงานให้เหลือ
+              </p>
+            </article>
+          </div>
+
+          <div class="control-options">
+            <div class="control-option">
+              <i class="fa-solid fa-person-running"></i>
+              <div>
+                <strong>Pose Control</strong>
+                <span>ขยับร่างกายและกระโดดเพื่อยืนยัน</span>
+              </div>
+            </div>
+
+            <div class="control-option">
+              <i class="fa-solid fa-keyboard"></i>
+              <div>
+                <strong>Keyboard</strong>
+                <span>ลูกศร/A-D และ Enter หรือ Space</span>
+              </div>
+            </div>
+
+            <div class="control-option">
+              <i class="fa-solid fa-hand-pointer"></i>
+              <div>
+                <strong>Touch / Mouse</strong>
+                <span>แตะหรือคลิกบนคำตอบได้โดยตรง</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="safety-box">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>
+              <strong>ความปลอดภัย:</strong>
+              ตรวจสอบว่ามีพื้นที่ว่างรอบตัว พื้นไม่ลื่น
+              และไม่จำเป็นต้องกระโดดสูงเพื่อยืนยันคำตอบ
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:center; margin-top:22px;">
+            <button
+              id="btn-howto-start"
+              class="btn btn-primary btn-lg"
+              type="button"
+            >
+              <i class="fa-solid fa-rocket"></i>
+              เข้าใจแล้ว เริ่มภารกิจ
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME SCREEN -->
+    <section
+      id="screen-game"
+      class="screen"
+      aria-labelledby="question-text"
+    >
+      <header class="game-hud">
+        <div class="hud-group">
+          <div class="hud-card">
+            <i class="fa-solid fa-star"></i>
+            <div>
+              <span class="hud-label">Score</span>
+              <span id="hud-score" class="hud-value">0</span>
+            </div>
+          </div>
+
+          <div class="hud-card optional-mobile">
+            <i class="fa-solid fa-bolt"></i>
+            <div>
+              <span class="hud-label">Combo</span>
+              <span id="hud-combo" class="hud-value">x0</span>
+            </div>
+          </div>
+
+          <div class="hud-card optional-mobile">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <div>
+              <span class="hud-label">Energy</span>
+              <div id="hud-energy" class="energy-row" aria-label="พลังงาน 3">
+                <i class="fa-solid fa-heart energy-heart"></i>
+                <i class="fa-solid fa-heart energy-heart"></i>
+                <i class="fa-solid fa-heart energy-heart"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="ui-timer"
+          class="timer-wrap"
+          aria-label="เวลาเหลือ 30 วินาที"
+        >
+          <svg class="timer-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="timer-track" cx="50" cy="50" r="42"></circle>
+            <circle
+              id="timer-progress"
+              class="timer-progress"
+              cx="50"
+              cy="50"
+              r="42"
+            ></circle>
+          </svg>
+          <span id="timer-number" class="timer-number">30</span>
+        </div>
+
+        <div class="hud-group end">
+          <button
+            id="btn-sound"
+            class="icon-btn"
+            type="button"
+            aria-label="ปิดเสียง"
+            title="เปิดหรือปิดเสียง"
+          >
+            <i class="fa-solid fa-volume-high"></i>
+          </button>
+
+          <button
+            id="btn-pause"
+            class="icon-btn"
+            type="button"
+            aria-label="หยุดเกมชั่วคราว"
+            title="หยุดเกมชั่วคราว"
+          >
+            <i class="fa-solid fa-pause"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="game-stage">
+        <section id="question-container" class="question-panel">
+          <div class="question-meta">
+            <span id="question-category" class="category-badge">
+              <i class="fa-solid fa-globe"></i>
+              โครงสร้างโลก
+            </span>
+            <span id="question-progress" class="question-progress">
+              QUESTION 1 / 10
+            </span>
+          </div>
+
+          <h1 id="question-text">กำลังเตรียมคำถาม...</h1>
+
+          <div id="ui-choices" aria-label="ตัวเลือกคำตอบ"></div>
+        </section>
+
+        <aside class="game-side">
+          <div class="camera-card">
+            <video
+              id="input-video"
+              playsinline
+              muted
+              aria-hidden="true"
+            ></video>
+            <canvas
+              id="pose-canvas"
+              width="640"
+              height="480"
+              aria-label="ภาพกล้องตรวจจับท่าทาง"
+            ></canvas>
+
+            <div id="camera-placeholder" class="camera-placeholder">
+              <i class="fa-solid fa-video"></i>
+              <span>กำลังเตรียมกล้อง</span>
+            </div>
+
+            <div id="camera-status" class="camera-status">
+              <i class="fa-solid fa-circle"></i>
+              <span>ยังไม่พบผู้เล่น</span>
+            </div>
+          </div>
+
+          <div class="game-tip">
+            <strong>
+              <i class="fa-solid fa-circle-info"></i>
+              วิธีควบคุม
+            </strong>
+            ขยับซ้าย–ขวาหรือใช้แป้นพิมพ์เพื่อเลือก
+            แล้วกระโดด กด Enter หรือ Space เพื่อยืนยัน
+
+            <div class="key-row" aria-hidden="true">
+              <kbd>←</kbd>
+              <kbd>→</kbd>
+              <kbd>A</kbd>
+              <kbd>D</kbd>
+              <kbd>Enter</kbd>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <div
+        id="player-indicator"
+        class="hidden-indicator"
+        aria-hidden="true"
+      >
+        <i class="fa-solid fa-location-crosshairs"></i>
+      </div>
+    </section>
+
+    <!-- RESULT SCREEN -->
+    <section
+      id="screen-result"
+      class="screen"
+      aria-labelledby="result-title"
+    >
+      <div class="result-shell glass-card">
+        <div class="result-emblem" aria-hidden="true">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+
+        <p class="eyebrow">Expedition Report</p>
+        <h1 id="result-title" class="result-title gradient-text">
+          MISSION COMPLETE
+        </h1>
+        <p id="result-message" class="result-subtitle">
+          ระบบกำลังประมวลผลภารกิจของคุณ
+        </p>
+
+        <div id="result-rank" class="rank-badge">
+          <i class="fa-solid fa-ranking-star"></i>
+          RANK C
+        </div>
+
+        <div class="result-grid">
+          <div class="result-stat">
+            <i class="fa-solid fa-star"></i>
+            <span id="result-score" class="result-stat-value">0</span>
+            <span class="result-stat-label">คะแนนรวม</span>
+          </div>
+
+          <div class="result-stat">
+            <i class="fa-solid fa-bullseye"></i>
+            <span id="result-accuracy" class="result-stat-value">0%</span>
+            <span class="result-stat-label">ความแม่นยำ</span>
+          </div>
+
+          <div class="result-stat">
+            <i class="fa-solid fa-check-double"></i>
+            <span id="result-correct" class="result-stat-value">0/10</span>
+            <span class="result-stat-label">ตอบถูก</span>
+          </div>
+
+          <div class="result-stat">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span id="result-time" class="result-stat-value">00:00</span>
+            <span class="result-stat-label">เวลาที่ใช้</span>
+          </div>
+        </div>
+
+        <div class="score-breakdown">
+          <h3>
+            <i class="fa-solid fa-chart-simple"></i>
+            รายละเอียดคะแนน
+          </h3>
+
+          <div class="breakdown-row">
+            <span>คะแนนจากคำตอบถูก</span>
+            <strong id="breakdown-base">+0</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>โบนัสตอบเร็วและ Combo</span>
+            <strong id="breakdown-bonus">+0</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>หักจากคำตอบผิด/หมดเวลา</span>
+            <strong id="breakdown-penalty">0</strong>
+          </div>
+        </div>
+
+        <div id="save-status" class="save-status" aria-live="polite">
+          <i class="fa-solid fa-cloud"></i>
+          <span>รอการบันทึกผล</span>
+        </div>
+
+        <div class="result-actions">
+          <button
+            id="btn-retry-save"
+            class="btn hidden"
+            type="button"
+          >
+            <i class="fa-solid fa-rotate"></i>
+            ลองบันทึกอีกครั้ง
+          </button>
+
+          <button
+            id="btn-play-again"
+            class="btn btn-primary"
+            type="button"
+          >
+            <i class="fa-solid fa-rotate-right"></i>
+            เล่นอีกครั้ง
+          </button>
+
+          <button
+            id="btn-result-menu"
+            class="btn"
+            type="button"
+          >
+            <i class="fa-solid fa-house"></i>
+            กลับหน้าหลัก
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div
+    id="feedback-toast"
+    class="feedback-toast"
+    role="status"
+    aria-live="assertive"
+  >
+    <div class="feedback-icon">
+      <i id="feedback-icon" class="fa-solid fa-check"></i>
+    </div>
+    <div>
+      <h2 id="feedback-title" class="feedback-title">ตอบถูก!</h2>
+      <p id="feedback-desc" class="feedback-desc"></p>
+    </div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div id="countdown-overlay" aria-hidden="true">
+    <div id="countdown-value">3</div>
+  </div>
+
+  <!-- PAUSE MODAL -->
+  <div
+    id="pause-modal"
+    class="modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pause-title"
+  >
+    <div class="modal-card">
+      <h2 id="pause-title">
+        <i class="fa-solid fa-pause"></i>
+        หยุดภารกิจชั่วคราว
+      </h2>
+      <p>
+        ตัวจับเวลาถูกหยุดไว้ คุณสามารถกลับไปเล่นต่อหรือยุติภารกิจได้
+      </p>
+      <div class="modal-actions">
+        <button id="btn-quit-game" class="btn btn-danger" type="button">
+          ยุติภารกิจ
+        </button>
+        <button id="btn-resume-game" class="btn btn-primary" type="button">
+          เล่นต่อ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div
+    id="settings-modal"
+    class="modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="settings-title"
+  >
+    <div class="modal-card">
+      <h2 id="settings-title">
+        <i class="fa-solid fa-sliders"></i>
+        ตั้งค่าการเล่น
+      </h2>
+      <p>
+        หากอุปกรณ์ทำงานช้า สามารถลดเอฟเฟกต์และใช้ Keyboard/Touch
+        แทนการตรวจจับท่าทางได้
+      </p>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-control">
+          รูปแบบการควบคุม
+        </label>
+        <select id="setting-control" class="form-input">
+          <option value="auto">อัตโนมัติ: Pose + Keyboard + Touch</option>
+          <option value="manual">Keyboard + Touch เท่านั้น</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-effects">
+          คุณภาพเอฟเฟกต์
+        </label>
+        <select id="setting-effects" class="form-input">
+          <option value="high">สูง</option>
+          <option value="low">ประหยัดพลังงาน</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-settings-close" class="btn btn-primary" type="button">
+          บันทึกการตั้งค่า
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+
+  <script>
+    "use strict";
+
+    /*
+      ASTRO EXPLORER — UPDATED SINGLE-FILE EDITION
+      ส่วนที่ 2 ต้องนำมาต่อจากบรรทัดนี้โดยตรง
+    */
