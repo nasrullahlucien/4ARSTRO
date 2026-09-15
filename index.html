@@ -2929,6 +2929,1644 @@
     "use strict";
 
     /*
-      ASTRO EXPLORER — UPDATED SINGLE-FILE EDITION
-      ส่วนที่ 2 ต้องนำมาต่อจากบรรทัดนี้โดยตรง
+    /* =========================================================
+       1. CONFIGURATION
+    ========================================================= */
+
+    const CONFIG = Object.freeze({
+      APP_NAME: "ASTRO EXPLORER",
+      STORAGE_PREFIX: "astro_explorer_",
+      QUESTION_COUNT: 10,
+      QUESTION_TIME: 30,
+      STARTING_ENERGY: 3,
+      BASE_SCORE: 100,
+      MAX_TIME_BONUS: 50,
+      WRONG_PENALTY: 25,
+      ANSWER_FEEDBACK_TIME: 1150,
+      SAVE_TIMEOUT: 10000,
+      POSE_FPS: 24,
+      POSE_CONFIRM_TIME: 850,
+      GESTURE_COOLDOWN: 900,
+      GOOGLE_SCRIPT_URL:
+        "https://script.google.com/macros/s/AKfycbwuz29I3dKjc0brSgLWHFJmlpPrb-G4c2Xt-ESXY6LemtH5Chjbp6jtki0IxvXsXTC9/exec"
+    });
+
+    /* =========================================================
+       2. QUESTION BANK — 35 QUESTIONS
+    ========================================================= */
+
+    const QuestionBank = [
+      {
+        id: "A01",
+        q: "การศึกษาโครงสร้างภายในของโลกทางอ้อม นักวิทยาศาสตร์อาศัยข้อมูลจากสิ่งใดเป็นหลัก?",
+        c: [
+          "คลื่นไหวสะเทือน",
+          "การระเบิดของภูเขาไฟ",
+          "อุกกาบาตที่ตกมาบนโลก"
+        ],
+        a: 0,
+        cat: "โครงสร้างโลก",
+        desc:
+          "ความเร็วของคลื่นไหวสะเทือน P-wave และ S-wave ที่เปลี่ยนไปตามตัวกลาง ช่วยบอกสถานะและความหนาแน่นภายในโลกได้"
+      },
+      {
+        id: "A02",
+        q: "คลื่นปฐมภูมิ (P-wave) มีลักษณะการเคลื่อนที่อย่างไร?",
+        c: [
+          "ผ่านได้ทุกสถานะ",
+          "ผ่านได้เฉพาะของแข็ง",
+          "เคลื่อนที่ตามแนวผิวโลก"
+        ],
+        a: 0,
+        cat: "คลื่นไหวสะเทือน",
+        desc:
+          "P-wave เป็นคลื่นตามยาว สามารถเดินทางผ่านของแข็ง ของเหลว และแก๊สได้"
+      },
+      {
+        id: "A03",
+        q: "ธาตุองค์ประกอบทางเคมีที่พบมากที่สุดในบริเวณแก่นโลกคือข้อใด?",
+        c: [
+          "ซิลิกอนและแมกนีเซียม",
+          "ออกซิเจนและคาร์บอน",
+          "เหล็กและนิกเกิล"
+        ],
+        a: 2,
+        cat: "โครงสร้างโลก",
+        desc:
+          "แก่นโลกมีองค์ประกอบหลักเป็นโลหะหนัก โดยเฉพาะเหล็กและนิกเกิล"
+      },
+      {
+        id: "A04",
+        q: "โครงสร้างโลกชั้นใดมีลักษณะเป็นของแข็งที่มีสภาพพลาสติก ไหลตัวได้ และเกี่ยวข้องกับแหล่งกำเนิดแมกมา?",
+        c: [
+          "ชั้นเปลือกโลก",
+          "ชั้นฐานธรณีภาค",
+          "ชั้นแก่นโลกชั้นใน"
+        ],
+        a: 1,
+        cat: "โครงสร้างโลก",
+        desc:
+          "ฐานธรณีภาคอยู่ในเนื้อโลกตอนบน มีสภาพเป็นของแข็งที่มีพฤติกรรมแบบพลาสติกและสามารถไหลตัวได้"
+      },
+      {
+        id: "A05",
+        q: "ข้อใดคือเกณฑ์สำคัญที่ใช้แบ่งโครงสร้างโลกออกเป็นธรณีภาค ฐานธรณีภาค มัชฌิมภาค และแก่นโลก?",
+        c: [
+          "ความหนาแน่นของสสารเพียงอย่างเดียว",
+          "องค์ประกอบทางเคมีเพียงอย่างเดียว",
+          "สมบัติเชิงกลและการเปลี่ยนแปลงความเร็วของคลื่นไหวสะเทือน"
+        ],
+        a: 2,
+        cat: "โครงสร้างโลก",
+        desc:
+          "การแบ่งชั้นโลกตามสมบัติเชิงกลอาศัยพฤติกรรมของวัสดุร่วมกับข้อมูลการเดินทางของคลื่นไหวสะเทือน"
+      },
+      {
+        id: "A06",
+        q: "เพราะเหตุใดคลื่นทุติยภูมิ (S-wave) จึงไม่สามารถเดินทางผ่านแก่นโลกชั้นนอกได้?",
+        c: [
+          "อุณหภูมิของแก่นโลกสูงเกินไป",
+          "แก่นโลกชั้นนอกมีสถานะเป็นของเหลว",
+          "แก่นโลกชั้นนอกมีความหนาแน่นต่ำ"
+        ],
+        a: 1,
+        cat: "คลื่นไหวสะเทือน",
+        desc:
+          "S-wave เป็นคลื่นตามขวาง จึงไม่สามารถเดินทางผ่านตัวกลางที่เป็นของเหลวได้"
+      },
+      {
+        id: "A07",
+        q: "หากแบ่งโครงสร้างโลกตามสมบัติเชิงกล โลกแบ่งออกเป็นกี่ชั้นหลัก?",
+        c: [
+          "3 ชั้น",
+          "4 ชั้น",
+          "5 ชั้น"
+        ],
+        a: 2,
+        cat: "โครงสร้างโลก",
+        desc:
+          "แบ่งเป็น 5 ชั้น ได้แก่ ธรณีภาค ฐานธรณีภาค มัชฌิมภาค แก่นโลกชั้นนอก และแก่นโลกชั้นใน"
+      },
+      {
+        id: "A08",
+        q: "หากขุดเจาะลงไปใต้ผิวโลกได้ลึก 12 กิโลเมตร โดยทั่วไปข้อมูลที่ได้จะยังอยู่ในโครงสร้างโลกชั้นใด?",
+        c: [
+          "ชั้นฐานธรณีภาค",
+          "ชั้นเปลือกโลก",
+          "ชั้นแก่นโลก"
+        ],
+        a: 1,
+        cat: "โครงสร้างโลก",
+        desc:
+          "เปลือกโลกมีความหนาแตกต่างกันประมาณ 5–70 กิโลเมตร การเจาะลึก 12 กิโลเมตรโดยทั่วไปจึงยังอยู่ในเปลือกโลก"
+      },
+      {
+        id: "A09",
+        q: "แก่นโลกชั้นนอก (Outer core) มีลักษณะสำคัญทางกายภาพอย่างไร?",
+        c: [
+          "เป็นของแข็งและมีอุณหภูมิต่ำ",
+          "เป็นของเหลวและมีอุณหภูมิสูง",
+          "เป็นแก๊สและมีความหนาแน่นต่ำ"
+        ],
+        a: 1,
+        cat: "โครงสร้างโลก",
+        desc:
+          "แก่นโลกชั้นนอกมีสถานะเป็นของเหลว การไหลวนของโลหะในบริเวณนี้เกี่ยวข้องกับการกำเนิดสนามแม่เหล็กโลก"
+      },
+      {
+        id: "A10",
+        q: "หากเขตอับคลื่นปฐมภูมิ (P-wave shadow zone) มีขนาดแคบลง โดยสมมติว่าปัจจัยอื่นคงเดิม อาจสันนิษฐานได้อย่างไร?",
+        c: [
+          "เปลือกโลกมีความหนามากขึ้น",
+          "แก่นโลกชั้นนอกอาจมีขนาดเล็กลง",
+          "เนื้อโลกหยุดถ่ายเทความร้อน"
+        ],
+        a: 1,
+        cat: "คลื่นไหวสะเทือน",
+        desc:
+          "เขตอับคลื่นสัมพันธ์กับการหักเหของคลื่นเมื่อผ่านขอบเขตแก่นโลกชั้นนอก หากบริเวณดังกล่าวมีขนาดเปลี่ยนไป เขตอับคลื่นก็อาจเปลี่ยนตาม"
+      },
+      {
+        id: "A11",
+        q: "ผู้เสนอแนวคิดทวีปเลื่อน (Continental Drift) คือใคร?",
+        c: [
+          "ชาร์ลส์ ดาร์วิน",
+          "อัลเฟรด เวเกเนอร์",
+          "อัลเบิร์ต ไอน์สไตน์"
+        ],
+        a: 1,
+        cat: "การแปรสัณฐาน",
+        desc:
+          "อัลเฟรด เวเกเนอร์เสนอว่าทวีปต่าง ๆ เคยเชื่อมต่อกันเป็นมหาทวีปพันเจีย ก่อนจะแยกออกจากกัน"
+      },
+      {
+        id: "A12",
+        q: "เมื่อมหาทวีปพันเจียแตกออกเป็นสองส่วน มหาทวีปทางตอนใต้มีชื่อว่าอะไร?",
+        c: [
+          "ลอเรเซีย",
+          "ยูเรเชีย",
+          "กอนด์วานา"
+        ],
+        a: 2,
+        cat: "การแปรสัณฐาน",
+        desc:
+          "มหาทวีปทางเหนือเรียกว่าลอเรเซีย ส่วนทางใต้เรียกว่ากอนด์วานา"
+      },
+      {
+        id: "A13",
+        q: "หลักฐานใดไม่ใช่หลักฐานที่เวเกเนอร์ใช้เสนอแนวคิดทวีปเลื่อนในช่วงแรก?",
+        c: [
+          "การแผ่ขยายของพื้นมหาสมุทร",
+          "รูปร่างของชายฝั่งทวีปที่ต่อกันได้",
+          "ซากดึกดำบรรพ์ชนิดเดียวกันบนต่างทวีป"
+        ],
+        a: 0,
+        cat: "การแปรสัณฐาน",
+        desc:
+          "แนวคิดการแผ่ขยายพื้นมหาสมุทรได้รับการพัฒนาในเวลาต่อมา และช่วยอธิบายกลไกที่แนวคิดของเวเกเนอร์ยังตอบไม่ได้"
+      },
+      {
+        id: "A14",
+        q: "ตามแนวคิดการแผ่ขยายพื้นมหาสมุทร อายุของหินบะซอลต์บนพื้นมหาสมุทรมีลักษณะอย่างไร?",
+        c: [
+          "หินใกล้สันเขากลางมหาสมุทรมีอายุน้อยกว่าหินที่อยู่ไกลออกไป",
+          "หินบนพื้นมหาสมุทรทุกบริเวณมีอายุเท่ากัน",
+          "หินบริเวณร่องลึกก้นสมุทรมีอายุน้อยที่สุดเสมอ"
+        ],
+        a: 0,
+        cat: "การแปรสัณฐาน",
+        desc:
+          "แมกมาดันขึ้นมาตามสันเขากลางมหาสมุทรและเย็นตัวเป็นหินใหม่ จึงพบหินอายุน้อยใกล้แนวสันเขามากกว่า"
+      },
+      {
+        id: "A15",
+        q: "รอยเลื่อนแซนแอนเดรียส (San Andreas Fault) เกิดจากการเคลื่อนที่ของแผ่นธรณีแบบใด?",
+        c: [
+          "เคลื่อนที่แยกออกจากกัน",
+          "เคลื่อนที่ผ่านกันในแนวระดับ",
+          "แผ่นหนึ่งมุดตัวลงใต้อีกแผ่นหนึ่ง"
+        ],
+        a: 1,
+        cat: "รอยเลื่อน",
+        desc:
+          "รอยเลื่อนแซนแอนเดรียสเป็นขอบแผ่นธรณีแบบเลื่อนผ่านกัน ระหว่างแผ่นแปซิฟิกกับแผ่นอเมริกาเหนือ"
+      },
+      {
+        id: "A16",
+        q: "เทือกเขาหิมาลัยเกิดจากกระบวนการทางธรณีวิทยาในข้อใด?",
+        c: [
+          "แผ่นอาระเบียและแผ่นแอฟริกาแยกออกจากกัน",
+          "แผ่นอเมริกาเหนือและแผ่นแปซิฟิกเลื่อนผ่านกัน",
+          "แผ่นอินเดียชนกับแผ่นยูเรเชีย"
+        ],
+        a: 2,
+        cat: "การเคลื่อนที่แผ่นธรณี",
+        desc:
+          "การชนกันของแผ่นทวีปทำให้ชั้นหินคดโค้งและยกตัวขึ้น กลายเป็นเทือกเขาหิมาลัย"
+      },
+      {
+        id: "A17",
+        q: "หุบเขาทรุดแอฟริกาตะวันออกและทะเลแดงเกี่ยวข้องกับการเคลื่อนที่ของแผ่นธรณีแบบใด?",
+        c: [
+          "เคลื่อนที่เข้าชนกัน",
+          "เคลื่อนที่แยกออกจากกัน",
+          "เคลื่อนที่ผ่านกันในแนวระดับ"
+        ],
+        a: 1,
+        cat: "การเคลื่อนที่แผ่นธรณี",
+        desc:
+          "บริเวณดังกล่าวเป็นเขตแยกตัว ทำให้เปลือกโลกบางลงและเกิดหุบเขาทรุดหรือแอ่งที่น้ำทะเลสามารถไหลเข้ามาได้"
+      },
+      {
+        id: "A18",
+        q: "หมู่เกาะญี่ปุ่นเป็นแนวหมู่เกาะภูเขาไฟรูปโค้งที่เกิดจากสาเหตุใด?",
+        c: [
+          "แผ่นทวีปชนกับแผ่นทวีป",
+          "แผ่นมหาสมุทรเคลื่อนที่แยกจากกัน",
+          "แผ่นมหาสมุทรมุดตัวลงใต้แผ่นธรณีอีกแผ่นหนึ่ง"
+        ],
+        a: 2,
+        cat: "การเคลื่อนที่แผ่นธรณี",
+        desc:
+          "การมุดตัวของแผ่นมหาสมุทรทำให้เกิดการหลอมละลายบางส่วน แมกมาจึงดันขึ้นและก่อแนวภูเขาไฟรูปโค้ง"
+      },
+      {
+        id: "A19",
+        q: "การเคลื่อนที่แยกออกจากกันของแผ่นธรณีทวีปอาจนำไปสู่การเกิดสิ่งใด?",
+        c: [
+          "ร่องลึกก้นสมุทรทันที",
+          "หุบเขาทรุดและแอ่งทะเลแคบ",
+          "เทือกเขาจากการชนของทวีป"
+        ],
+        a: 1,
+        cat: "การเคลื่อนที่แผ่นธรณี",
+        desc:
+          "การแยกตัวของแผ่นทวีปทำให้เกิดหุบเขาทรุด และอาจพัฒนาต่อไปเป็นแอ่งทะเลแคบ เช่น ทะเลแดง"
+      },
+      {
+        id: "A20",
+        q: "บริเวณเขตมุดตัว ปลายของแผ่นธรณีที่มุดลงไปจะเกิดการเปลี่ยนแปลงสำคัญอย่างไร?",
+        c: [
+          "ปลดปล่อยน้ำและสารระเหย กระตุ้นให้เนื้อโลกด้านบนหลอมละลายบางส่วน",
+          "เย็นตัวจนกลายเป็นแก่นโลกชั้นใน",
+          "ลอยกลับขึ้นสู่ผิวโลกทั้งแผ่นทันที"
+        ],
+        a: 0,
+        cat: "การเคลื่อนที่แผ่นธรณี",
+        desc:
+          "น้ำและสารระเหยจากแผ่นที่มุดตัวช่วยลดจุดหลอมเหลวของเนื้อโลกด้านบน ทำให้เกิดแมกมาและแนวภูเขาไฟ"
+      },
+      {
+        id: "A21",
+        q: "จุดใต้ผิวโลกซึ่งเป็นตำแหน่งเริ่มต้นการปลดปล่อยพลังงานของแผ่นดินไหวเรียกว่าอะไร?",
+        c: [
+          "จุดเหนือศูนย์เกิดแผ่นดินไหว",
+          "ศูนย์เกิดแผ่นดินไหว",
+          "สันเขากลางมหาสมุทร"
+        ],
+        a: 1,
+        cat: "แผ่นดินไหว",
+        desc:
+          "ศูนย์เกิดแผ่นดินไหวหรือ Hypocenter คือจุดกำเนิดใต้ดิน ส่วนตำแหน่งบนผิวโลกเหนือจุดนั้นเรียกว่า Epicenter"
+      },
+      {
+        id: "A22",
+        q: "วงแหวนแห่งไฟ (Ring of Fire) ซึ่งเกิดแผ่นดินไหวและภูเขาไฟบ่อย ตั้งอยู่โดยรอบมหาสมุทรใด?",
+        c: [
+          "มหาสมุทรแปซิฟิก",
+          "มหาสมุทรอินเดีย",
+          "มหาสมุทรแอตแลนติก"
+        ],
+        a: 0,
+        cat: "ภูเขาไฟและแผ่นดินไหว",
+        desc:
+          "วงแหวนแห่งไฟอยู่รอบมหาสมุทรแปซิฟิก เป็นบริเวณที่มีขอบแผ่นธรณีและเขตมุดตัวจำนวนมาก"
+      },
+      {
+        id: "A23",
+        q: "ข้อใดเป็นมาตราที่ใช้วัดขนาดหรือพลังงานของแผ่นดินไหว?",
+        c: [
+          "มาตราโมเมนต์แมกนิจูด",
+          "มาตราเมอร์คัลลี",
+          "มาตราโบฟอร์ต"
+        ],
+        a: 0,
+        cat: "แผ่นดินไหว",
+        desc:
+          "มาตราโมเมนต์แมกนิจูดใช้รายงานขนาดของแผ่นดินไหว ส่วนมาตราเมอร์คัลลีใช้บรรยายความรุนแรงจากผลกระทบที่สังเกตได้"
+      },
+      {
+        id: "A24",
+        q: "ปัจจัยใดมีแนวโน้มทำให้การปะทุของภูเขาไฟรุนแรงมากขึ้น?",
+        c: [
+          "แมกมามีความหนืดต่ำและแก๊สหลุดออกง่าย",
+          "แมกมามีซิลิกาและแก๊สสูง ทำให้มีความหนืดมาก",
+          "แมกมามีแก๊สน้อยและมีความหนืดต่ำ"
+        ],
+        a: 1,
+        cat: "ภูเขาไฟระเบิด",
+        desc:
+          "แมกมาที่มีซิลิกาสูงมักมีความหนืดมากและกักเก็บแก๊สได้ดี ทำให้ความดันสะสมและอาจปะทุอย่างรุนแรง"
+      },
+      {
+        id: "A25",
+        q: "เหตุการณ์ใดอาจเป็นสัญญาณธรรมชาติก่อนคลื่นสึนามิเข้าปะทะชายฝั่ง?",
+        c: [
+          "น้ำทะเลลดระดับหรือเปลี่ยนแปลงอย่างผิดปกติอย่างรวดเร็ว",
+          "ลมเปลี่ยนทิศทางเพียงเล็กน้อย",
+          "เกิดฝนตกต่อเนื่องหลายชั่วโมง"
+        ],
+        a: 0,
+        cat: "สึนามิ",
+        desc:
+          "หากเกิดแผ่นดินไหวแรงบริเวณชายฝั่งหรือน้ำทะเลลดลงผิดปกติ ควรอพยพขึ้นที่สูงทันทีโดยไม่รอประกาศ"
+      },
+      {
+        id: "A26",
+        q: "แผ่นดินไหวและสึนามิในมหาสมุทรอินเดีย พ.ศ. 2547 มีจุดกำเนิดใกล้บริเวณใด?",
+        c: [
+          "เกาะฮอนชู ประเทศญี่ปุ่น",
+          "เกาะสุมาตรา ประเทศอินโดนีเซีย",
+          "หมู่เกาะฮาวาย สหรัฐอเมริกา"
+        ],
+        a: 1,
+        cat: "สึนามิ",
+        desc:
+          "เหตุการณ์ดังกล่าวเกิดจากแผ่นดินไหวขนาดใหญ่บริเวณเขตมุดตัวนอกชายฝั่งทางตะวันตกของเกาะสุมาตรา"
+      },
+      {
+        id: "A27",
+        q: "ข้อใดกล่าวถูกต้องเกี่ยวกับคลื่นสึนามิ?",
+        c: [
+          "เมื่อเข้าสู่น้ำตื้น คลื่นจะเคลื่อนที่เร็วขึ้นเสมอ",
+          "แผ่นดินไหวหรือภูเขาไฟใต้ทะเลสามารถเป็นสาเหตุของสึนามิได้",
+          "ในทะเลลึกสึนามิมีความสูงมากและเคลื่อนที่ช้า"
+        ],
+        a: 1,
+        cat: "สึนามิ",
+        desc:
+          "ในทะเลลึกสึนามิเคลื่อนที่เร็วแต่มีความสูงคลื่นน้อย เมื่อเข้าสู่น้ำตื้นความเร็วจะลดลงและความสูงคลื่นเพิ่มขึ้น"
+      },
+      {
+        id: "A28",
+        q: "หากอยู่ในอาคารเมื่อเกิดแผ่นดินไหว ควรทำอย่างไรเพื่อความปลอดภัย?",
+        c: [
+          "หมอบ หลบใต้โต๊ะที่แข็งแรง และยึดจับให้แน่น",
+          "รีบวิ่งลงบันไดทันทีขณะที่อาคารกำลังสั่น",
+          "ยืนชิดกระจกเพื่อสังเกตสถานการณ์ภายนอก"
+        ],
+        a: 0,
+        cat: "ภัยพิบัติ",
+        desc:
+          "ควรปฏิบัติตามหลัก Drop, Cover and Hold On และหลีกเลี่ยงกระจกหรือสิ่งของที่อาจตกลงมา"
+      },
+      {
+        id: "A29",
+        q: "มหาสมุทรใดมีเหตุการณ์สึนามิเกิดขึ้นบ่อยที่สุด?",
+        c: [
+          "มหาสมุทรอินเดีย",
+          "มหาสมุทรแอตแลนติก",
+          "มหาสมุทรแปซิฟิก"
+        ],
+        a: 2,
+        cat: "สึนามิ",
+        desc:
+          "มหาสมุทรแปซิฟิกล้อมรอบด้วยวงแหวนแห่งไฟ ซึ่งมีเขตมุดตัวและแผ่นดินไหวใต้ทะเลจำนวนมาก"
+      },
+      {
+        id: "A30",
+        q: "หากพื้นที่ลาดเขามีเถ้าภูเขาไฟสะสมหนาแน่น ภัยใดควรเฝ้าระวังเป็นพิเศษเมื่อมีฝนตกหนัก?",
+        c: [
+          "การกลับขั้วของสนามแม่เหล็กโลก",
+          "โคลนภูเขาไฟหรือลาฮาร์",
+          "น้ำทะเลลดระดับทั่วโลก"
+        ],
+        a: 1,
+        cat: "ภัยพิบัติ",
+        desc:
+          "น้ำฝนอาจผสมกับเถ้าและเศษวัสดุภูเขาไฟ กลายเป็นโคลนภูเขาไฟหรือลาฮาร์ที่ไหลลงมาตามพื้นที่ลาดชัน"
+      },
+      {
+        id: "A31",
+        q: "[ภารกิจวิเคราะห์] แผ่นธรณีเคลื่อนที่แยกออกจากกันใต้มหาสมุทร ทำให้เกิดธรณีสัณฐานแบบใด?",
+        c: [
+          "สันเขากลางมหาสมุทร",
+          "ร่องลึกก้นสมุทร",
+          "เทือกเขาจากการชนของทวีป"
+        ],
+        a: 0,
+        cat: "วิเคราะห์: การแปรสัณฐาน",
+        desc:
+          "เมื่อแผ่นมหาสมุทรแยกออกจากกัน แมกมาจะดันขึ้นมาและเย็นตัวเป็นเปลือกโลกใหม่ตามแนวสันเขากลางมหาสมุทร"
+      },
+      {
+        id: "A32",
+        q: "[วิเคราะห์ข่าวลือ] มีข้อความว่า “ประเทศไทยจะเกิดแผ่นดินไหวขนาด 9 จากการพลิกตัวของเปลือกโลกอย่างแน่นอน” ควรประเมินอย่างไร?",
+        c: [
+          "เชื่อทันทีเพราะประเทศไทยอยู่บนรอยต่อแผ่นธรณีหลัก",
+          "ไม่ควรเชื่อโดยไม่มีหลักฐาน และควรตรวจสอบกับหน่วยงานวิทยาศาสตร์ที่น่าเชื่อถือ",
+          "เชื่อได้เพราะลมสุริยะทำนายแผ่นดินไหวได้อย่างแม่นยำ"
+        ],
+        a: 1,
+        cat: "วิเคราะห์: ข่าวลือภัยพิบัติ",
+        desc:
+          "คำทำนายแผ่นดินไหวที่ระบุวัน เวลา สถานที่ และขนาดอย่างแน่นอนยังไม่มีวิธีวิทยาศาสตร์ที่เชื่อถือได้ ควรตรวจสอบข้อมูลกับหน่วยงานทางการ"
+      },
+      {
+        id: "A33",
+        q: "[ภารกิจวิเคราะห์] แนวคิดการแผ่ขยายพื้นมหาสมุทรของแฮร์รี เฮส ช่วยเติมเต็มข้อสงสัยใดของแนวคิดทวีปเลื่อน?",
+        c: [
+          "อธิบายกลไกที่ทำให้พื้นมหาสมุทรเกิดใหม่และช่วยให้แผ่นธรณีเคลื่อนที่",
+          "อธิบายการกำเนิดสนามแม่เหล็กโลกทั้งหมด",
+          "พิสูจน์ว่าแก่นโลกชั้นในเป็นของเหลว"
+        ],
+        a: 0,
+        cat: "วิเคราะห์: ทฤษฎีแผ่นธรณี",
+        desc:
+          "การเกิดพื้นมหาสมุทรใหม่ตามสันเขากลางมหาสมุทรช่วยอธิบายกลไกการเคลื่อนที่ ซึ่งแนวคิดทวีปเลื่อนเดิมยังอธิบายได้ไม่สมบูรณ์"
+      },
+      {
+        id: "A34",
+        q: "[เอาตัวรอดจากสึนามิ] หากรู้สึกถึงแผ่นดินไหวรุนแรงบริเวณชายฝั่งและเห็นน้ำทะเลลดลงรวดเร็ว ควรทำสิ่งใดก่อน?",
+        c: [
+          "ลงไปเก็บสัตว์ทะเลที่เกยตื้น",
+          "นำเรือเล็กออกจากชายฝั่งด้วยตนเอง",
+          "แจ้งเตือนคนรอบข้างและรีบอพยพขึ้นที่สูงหรือเข้าไปในแผ่นดิน"
+        ],
+        a: 2,
+        cat: "วิเคราะห์: การเอาตัวรอด",
+        desc:
+          "น้ำทะเลเปลี่ยนระดับอย่างผิดปกติหลังแผ่นดินไหวเป็นสัญญาณเตือนสึนามิ ควรอพยพทันทีและปฏิบัติตามเส้นทางที่กำหนด"
+      },
+      {
+        id: "A35",
+        q: "[ภารกิจวิเคราะห์] พื้นที่ใดมีความเสี่ยงต่อแผ่นดินไหวสูงตามหลักธรณีวิทยา?",
+        c: [
+          "บริเวณตอนกลางของแผ่นธรณีทุกแห่งเท่ากัน",
+          "บริเวณแนวรอยต่อแผ่นธรณีและรอยเลื่อนมีพลัง",
+          "บริเวณที่ราบลุ่มแม่น้ำทุกแห่ง"
+        ],
+        a: 1,
+        cat: "วิเคราะห์: ความเสี่ยงภัย",
+        desc:
+          "การสะสมและปลดปล่อยความเค้นเกิดขึ้นบ่อยตามแนวรอยต่อแผ่นธรณีและรอยเลื่อนมีพลัง จึงมีความเสี่ยงสูงกว่าโดยทั่วไป"
+      }
+    ];
+
+    /* =========================================================
+       3. SHARED STATE
+    ========================================================= */
+
+    const GameState = {
+      student: {
+        studentId: "",
+        firstName: "",
+        lastName: ""
+      },
+      settings: {
+        controlMode: "auto",
+        effects: "high",
+        sound: true
+      },
+      activeQuestions: [],
+      currentIndex: 0,
+      selectedIndex: 0,
+      score: 0,
+      correct: 0,
+      wrong: 0,
+      combo: 0,
+      bestCombo: 0,
+      energy: CONFIG.STARTING_ENERGY,
+      timeLeft: CONFIG.QUESTION_TIME,
+      elapsedSeconds: 0,
+      basePoints: 0,
+      bonusPoints: 0,
+      penalties: 0,
+      answers: [],
+      running: false,
+      paused: false,
+      answerLocked: false,
+      timerId: null,
+      startTimestamp: 0,
+      attemptId: "",
+      lastPayload: null
+    };
+
+    /* =========================================================
+       4. COMMON UTILITIES
+    ========================================================= */
+
+    const $ = (selector, parent = document) =>
+      parent.querySelector(selector);
+
+    const $$ = (selector, parent = document) =>
+      Array.from(parent.querySelectorAll(selector));
+
+    const clamp = (value, min, max) =>
+      Math.min(max, Math.max(min, value));
+
+    const wait = (milliseconds) =>
+      new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
+    const escapeHTML = (value) =>
+      String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const shuffleArray = (array) => {
+      const result = [...array];
+
+      for (let i = result.length - 1; i > 0; i -= 1) {
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [result[i], result[randomIndex]] = [
+          result[randomIndex],
+          result[i]
+        ];
+      }
+
+      return result;
+    };
+
+    const formatNumber = (value) =>
+      new Intl.NumberFormat("th-TH").format(
+        Math.max(0, Math.round(Number(value) || 0))
+      );
+
+    const formatTime = (totalSeconds) => {
+      const safeSeconds = Math.max(0, Math.floor(totalSeconds || 0));
+      const minutes = String(Math.floor(safeSeconds / 60)).padStart(2, "0");
+      const seconds = String(safeSeconds % 60).padStart(2, "0");
+
+      return `${minutes}:${seconds}`;
+    };
+
+    const createAttemptId = () => {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+
+      return [
+        "astro",
+        Date.now(),
+        Math.random().toString(36).slice(2, 10)
+      ].join("-");
+    };
+
+    const announce = (message) => {
+      const liveRegion = $("#app-status");
+
+      liveRegion.textContent = "";
+      window.setTimeout(() => {
+        liveRegion.textContent = message;
+      }, 20);
+    };
+
+    const safeStorage = {
+      get(key, fallback = null) {
+        try {
+          const value = localStorage.getItem(
+            `${CONFIG.STORAGE_PREFIX}${key}`
+          );
+
+          return value === null ? fallback : JSON.parse(value);
+        } catch (error) {
+          console.warn("อ่านข้อมูลจาก localStorage ไม่สำเร็จ", error);
+          return fallback;
+        }
+      },
+
+      set(key, value) {
+        try {
+          localStorage.setItem(
+            `${CONFIG.STORAGE_PREFIX}${key}`,
+            JSON.stringify(value)
+          );
+          return true;
+        } catch (error) {
+          console.warn("บันทึกข้อมูลลง localStorage ไม่สำเร็จ", error);
+          return false;
+        }
+      },
+
+      remove(key) {
+        try {
+          localStorage.removeItem(`${CONFIG.STORAGE_PREFIX}${key}`);
+        } catch (error) {
+          console.warn("ลบข้อมูลจาก localStorage ไม่สำเร็จ", error);
+        }
+      }
+    };
+
+    /* =========================================================
+       5. SCREEN AND MODAL CONTROLLER
+    ========================================================= */
+
+    const UISys = {
+      currentScreen: "screen-login",
+      transitionBusy: false,
+
+      async showScreen(screenId, options = {}) {
+        if (
+          this.transitionBusy ||
+          screenId === this.currentScreen
+        ) {
+          return;
+        }
+
+        const currentScreen = $(`#${this.currentScreen}`);
+        const nextScreen = $(`#${screenId}`);
+
+        if (!nextScreen) {
+          console.error(`ไม่พบหน้าจอ ${screenId}`);
+          return;
+        }
+
+        this.transitionBusy = true;
+
+        if (currentScreen) {
+          currentScreen.classList.add("exiting");
+          await wait(options.instant ? 10 : 260);
+          currentScreen.classList.remove("active", "exiting");
+          currentScreen.setAttribute("aria-hidden", "true");
+        }
+
+        nextScreen.classList.add("active");
+        nextScreen.removeAttribute("aria-hidden");
+
+        this.currentScreen = screenId;
+        this.transitionBusy = false;
+
+        const firstFocusable = nextScreen.querySelector(
+          "button:not([disabled]), input:not([disabled]), select:not([disabled])"
+        );
+
+        if (options.focus !== false && firstFocusable) {
+          window.setTimeout(() => firstFocusable.focus(), 80);
+        }
+
+        window.scrollTo({ top: 0, behavior: "auto" });
+      },
+
+      openModal(modalId) {
+        const modal = $(`#${modalId}`);
+        if (!modal) return;
+
+        modal.classList.add("open");
+
+        const focusable = modal.querySelector(
+          "button:not([disabled]), input:not([disabled]), select:not([disabled])"
+        );
+
+        focusable?.focus();
+      },
+
+      closeModal(modalId) {
+        $(`#${modalId}`)?.classList.remove("open");
+      },
+
+      setButtonLoading(button, loading, text = "กำลังดำเนินการ...") {
+        if (!button) return;
+
+        if (loading) {
+          button.dataset.originalHtml = button.innerHTML;
+          button.disabled = true;
+          button.innerHTML =
+            `<i class="fa-solid fa-circle-notch fa-spin"></i>` +
+            `<span>${escapeHTML(text)}</span>`;
+        } else {
+          button.disabled = false;
+
+          if (button.dataset.originalHtml) {
+            button.innerHTML = button.dataset.originalHtml;
+            delete button.dataset.originalHtml;
+          }
+        }
+      },
+
+      showFeedback(type, title, description) {
+        const toast = $("#feedback-toast");
+        const icon = $("#feedback-icon");
+
+        toast.classList.remove("success", "error", "show");
+        toast.classList.add(type);
+
+        icon.className =
+          type === "success"
+            ? "fa-solid fa-check"
+            : "fa-solid fa-xmark";
+
+        $("#feedback-title").textContent = title;
+        $("#feedback-desc").textContent = description;
+
+        requestAnimationFrame(() => {
+          toast.classList.add("show");
+        });
+
+        announce(`${title} ${description}`);
+      },
+
+      hideFeedback() {
+        $("#feedback-toast").classList.remove("show");
+      },
+
+      updateMenu() {
+        const {
+          studentId,
+          firstName,
+          lastName
+        } = GameState.student;
+
+        $("#menu-player-name").textContent =
+          `${firstName} ${lastName}`.trim() || "นักสำรวจ";
+
+        $("#menu-player-id").textContent =
+          `ID: ${studentId || "-"}`;
+
+        const highScore = safeStorage.get("high_score", 0);
+        $("#menu-high-score").textContent = formatNumber(highScore);
+
+        const cameraStatus = $("#menu-camera-status");
+
+        if (
+          GameState.settings.controlMode === "manual" ||
+          !navigator.mediaDevices?.getUserMedia
+        ) {
+          cameraStatus.textContent = "ใช้โหมดสัมผัส";
+          cameraStatus.classList.add("ready");
+        } else if (PoseTrackingSys.cameraReady) {
+          cameraStatus.textContent = "พร้อม";
+          cameraStatus.classList.add("ready");
+        } else {
+          cameraStatus.textContent = "ตรวจสอบเมื่อเริ่ม";
+          cameraStatus.classList.remove("ready");
+        }
+      },
+
+      createCelebrationParticles(count = 70) {
+        if (
+          GameState.settings.effects === "low" ||
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+          return;
+        }
+
+        const colors = [
+          "#50e5ff",
+          "#4f7cff",
+          "#a66cff",
+          "#43f59d",
+          "#ffcf57",
+          "#ffffff"
+        ];
+
+        const particleCount = Math.min(count, 90);
+
+        for (let i = 0; i < particleCount; i += 1) {
+          const particle = document.createElement("span");
+          const startX = Math.random() * window.innerWidth;
+          const endX = (Math.random() - 0.5) * 360;
+          const endY = window.innerHeight + 100 + Math.random() * 180;
+
+          particle.className = "particle";
+          particle.style.left = `${startX}px`;
+          particle.style.top = `${-20 - Math.random() * 150}px`;
+          particle.style.background =
+            colors[Math.floor(Math.random() * colors.length)];
+          particle.style.setProperty("--particle-x", `${endX}px`);
+          particle.style.setProperty("--particle-y", `${endY}px`);
+          particle.style.setProperty(
+            "--particle-r",
+            `${Math.random() * 900 - 450}deg`
+          );
+          particle.style.animationDelay = `${Math.random() * 450}ms`;
+          particle.style.animationDuration =
+            `${1400 + Math.random() * 900}ms`;
+
+          document.body.appendChild(particle);
+
+          window.setTimeout(() => {
+            particle.remove();
+          }, 3000);
+        }
+      },
+
+      showScorePop(points, targetElement) {
+        if (!targetElement) return;
+
+        const rect = targetElement.getBoundingClientRect();
+        const pop = document.createElement("span");
+
+        pop.className = "score-pop";
+        pop.textContent = `+${formatNumber(points)}`;
+        pop.style.left = `${rect.left + rect.width / 2}px`;
+        pop.style.top = `${rect.top}px`;
+
+        document.body.appendChild(pop);
+        window.setTimeout(() => pop.remove(), 1000);
+      },
+
+      async countdown() {
+        const overlay = $("#countdown-overlay");
+        const value = $("#countdown-value");
+        const sequence = ["3", "2", "1", "GO!"];
+
+        overlay.classList.add("active");
+        overlay.setAttribute("aria-hidden", "false");
+
+        for (const item of sequence) {
+          value.textContent = item;
+          value.style.animation = "none";
+          void value.offsetWidth;
+          value.style.animation =
+            "countdown-pop 800ms var(--ease-emphasized) both";
+
+          AudioSys.playCountdown(item);
+          announce(item === "GO!" ? "เริ่มภารกิจ" : item);
+
+          await wait(item === "GO!" ? 650 : 780);
+        }
+
+        overlay.classList.remove("active");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+    };
+
+    /* =========================================================
+       6. LOGIN SYSTEM
+    ========================================================= */
+
+    const LoginSys = {
+      fields: {
+        studentId: {
+          input: "#inp-studentid",
+          error: "#error-studentid"
+        },
+        firstName: {
+          input: "#inp-firstname",
+          error: "#error-firstname"
+        },
+        lastName: {
+          input: "#inp-lastname",
+          error: "#error-lastname"
+        }
+      },
+
+      init() {
+        const savedStudent = safeStorage.get("student", null);
+
+        if (savedStudent) {
+          $("#inp-studentid").value = savedStudent.studentId || "";
+          $("#inp-firstname").value = savedStudent.firstName || "";
+          $("#inp-lastname").value = savedStudent.lastName || "";
+        }
+
+        $("#login-form").addEventListener(
+          "submit",
+          (event) => this.submit(event)
+        );
+
+        Object.values(this.fields).forEach(({ input }) => {
+          $(input).addEventListener("input", () => {
+            this.clearFieldError(input);
+          });
+        });
+
+        $("#inp-studentid").addEventListener("input", (event) => {
+          event.target.value = event.target.value
+            .replace(/[^\dA-Za-zก-๙_-]/g, "")
+            .slice(0, 20);
+        });
+      },
+
+      clearFieldError(inputSelector) {
+        const entry = Object.values(this.fields).find(
+          (field) => field.input === inputSelector
+        );
+
+        if (!entry) return;
+
+        $(entry.input).removeAttribute("aria-invalid");
+        $(entry.error).textContent = "";
+      },
+
+      setFieldError(fieldName, message) {
+        const entry = this.fields[fieldName];
+        if (!entry) return;
+
+        const input = $(entry.input);
+        input.setAttribute("aria-invalid", "true");
+        $(entry.error).textContent = message;
+      },
+
+      validate(student) {
+        let valid = true;
+
+        Object.values(this.fields).forEach(({ input, error }) => {
+          $(input).removeAttribute("aria-invalid");
+          $(error).textContent = "";
+        });
+
+        if (student.studentId.length < 2) {
+          this.setFieldError(
+            "studentId",
+            "กรุณากรอกรหัสนักเรียนอย่างน้อย 2 ตัวอักษร"
+          );
+          valid = false;
+        }
+
+        if (student.firstName.length < 2) {
+          this.setFieldError(
+            "firstName",
+            "กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร"
+          );
+          valid = false;
+        }
+
+        if (student.lastName.length < 2) {
+          this.setFieldError(
+            "lastName",
+            "กรุณากรอกนามสกุลอย่างน้อย 2 ตัวอักษร"
+          );
+          valid = false;
+        }
+
+        return valid;
+      },
+
+      async submit(event) {
+        event.preventDefault();
+
+        const student = {
+          studentId: $("#inp-studentid").value.trim(),
+          firstName: $("#inp-firstname").value.trim(),
+          lastName: $("#inp-lastname").value.trim()
+        };
+
+        if (!this.validate(student)) {
+          announce("ข้อมูลยังไม่ครบ กรุณาตรวจสอบช่องที่แจ้งเตือน");
+          $("[aria-invalid='true']")?.focus();
+          AudioSys.playError();
+          return;
+        }
+
+        const loginButton = $("#btn-login");
+        UISys.setButtonLoading(
+          loginButton,
+          true,
+          "กำลังยืนยันตัวตน"
+        );
+
+        await AudioSys.ensureContext();
+        await wait(500);
+
+        GameState.student = student;
+        safeStorage.set("student", student);
+
+        $("#login-card").classList.add("login-success");
+        AudioSys.playSuccess();
+        announce(`ยินดีต้อนรับ ${student.firstName}`);
+
+        await wait(650);
+
+        UISys.setButtonLoading(loginButton, false);
+        $("#login-card").classList.remove("login-success");
+
+        UISys.updateMenu();
+        await UISys.showScreen("screen-menu");
+      },
+
+      logout() {
+        GameState.student = {
+          studentId: "",
+          firstName: "",
+          lastName: ""
+        };
+
+        safeStorage.remove("student");
+
+        $("#login-form").reset();
+        Object.values(this.fields).forEach(({ input, error }) => {
+          $(input).removeAttribute("aria-invalid");
+          $(error).textContent = "";
+        });
+
+        UISys.showScreen("screen-login");
+        announce("ออกจากระบบเรียบร้อยแล้ว");
+      }
+    };
+
+    /* =========================================================
+       7. SETTINGS SYSTEM
+    ========================================================= */
+
+    const SettingsSys = {
+      init() {
+        const saved = safeStorage.get("settings", {});
+
+        GameState.settings = {
+          ...GameState.settings,
+          ...saved
+        };
+
+        $("#setting-control").value =
+          GameState.settings.controlMode;
+
+        $("#setting-effects").value =
+          GameState.settings.effects;
+
+        this.apply();
+
+        $("#btn-settings").addEventListener("click", () => {
+          UISys.openModal("settings-modal");
+        });
+
+        $("#btn-settings-close").addEventListener("click", () => {
+          this.save();
+          UISys.closeModal("settings-modal");
+          UISys.updateMenu();
+        });
+
+        $("#settings-modal").addEventListener("click", (event) => {
+          if (event.target.id === "settings-modal") {
+            UISys.closeModal("settings-modal");
+          }
+        });
+      },
+
+      save() {
+        GameState.settings.controlMode =
+          $("#setting-control").value;
+
+        GameState.settings.effects =
+          $("#setting-effects").value;
+
+        safeStorage.set("settings", GameState.settings);
+        this.apply();
+
+        announce("บันทึกการตั้งค่าเรียบร้อยแล้ว");
+      },
+
+      apply() {
+        const lowEffects =
+          GameState.settings.effects === "low";
+
+        document.documentElement.classList.toggle(
+          "low-effects",
+          lowEffects
+        );
+
+        GraphicsSys.setQuality(
+          lowEffects ? "low" : "high"
+        );
+      }
+    };
+
+    /* =========================================================
+       8. AUDIO SYSTEM
+    ========================================================= */
+
+    const AudioSys = {
+      context: null,
+      masterGain: null,
+
+      async ensureContext() {
+        if (!GameState.settings.sound) return false;
+
+        try {
+          if (!this.context) {
+            const AudioContextClass =
+              window.AudioContext || window.webkitAudioContext;
+
+            if (!AudioContextClass) return false;
+
+            this.context = new AudioContextClass();
+            this.masterGain = this.context.createGain();
+            this.masterGain.gain.value = 0.18;
+            this.masterGain.connect(this.context.destination);
+          }
+
+          if (this.context.state === "suspended") {
+            await this.context.resume();
+          }
+
+          return true;
+        } catch (error) {
+          console.warn("ไม่สามารถเปิดระบบเสียงได้", error);
+          return false;
+        }
+      },
+
+      tone({
+        frequency = 440,
+        endFrequency = frequency,
+        duration = 0.16,
+        type = "sine",
+        volume = 0.12,
+        delay = 0
+      } = {}) {
+        if (
+          !GameState.settings.sound ||
+          !this.context ||
+          !this.masterGain
+        ) {
+          return;
+        }
+
+        const now = this.context.currentTime + delay;
+        const oscillator = this.context.createOscillator();
+        const gain = this.context.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          Math.max(1, endFrequency),
+          now + duration
+        );
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(
+          Math.max(0.0001, volume),
+          now + 0.02
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          now + duration
+        );
+
+        oscillator.connect(gain);
+        gain.connect(this.masterGain);
+
+        oscillator.start(now);
+        oscillator.stop(now + duration + 0.03);
+      },
+
+      playClick() {
+        this.tone({
+          frequency: 520,
+          endFrequency: 620,
+          duration: 0.08,
+          type: "sine",
+          volume: 0.08
+        });
+      },
+
+      playMove() {
+        this.tone({
+          frequency: 260,
+          endFrequency: 330,
+          duration: 0.07,
+          type: "sine",
+          volume: 0.06
+        });
+      },
+
+      playCorrect() {
+        this.tone({
+          frequency: 523,
+          endFrequency: 659,
+          duration: 0.16,
+          type: "sine",
+          volume: 0.12
+        });
+
+        this.tone({
+          frequency: 659,
+          endFrequency: 880,
+          duration: 0.24,
+          type: "sine",
+          volume: 0.13,
+          delay: 0.12
+        });
+      },
+
+      playError() {
+        this.tone({
+          frequency: 210,
+          endFrequency: 110,
+          duration: 0.3,
+          type: "sawtooth",
+          volume: 0.08
+        });
+      },
+
+      playSuccess() {
+        [523, 659, 784, 1046].forEach((frequency, index) => {
+          this.tone({
+            frequency,
+            endFrequency: frequency * 1.03,
+            duration: 0.25,
+            type: "sine",
+            volume: 0.09,
+            delay: index * 0.1
+          });
+        });
+      },
+
+      playCountdown(value) {
+        this.tone({
+          frequency: value === "GO!" ? 880 : 420,
+          endFrequency: value === "GO!" ? 1180 : 470,
+          duration: value === "GO!" ? 0.35 : 0.13,
+          type: value === "GO!" ? "sine" : "square",
+          volume: 0.08
+        });
+      },
+
+      toggle() {
+        GameState.settings.sound =
+          !GameState.settings.sound;
+
+        safeStorage.set("settings", GameState.settings);
+
+        const button = $("#btn-sound");
+        const icon = $("i", button);
+
+        icon.className = GameState.settings.sound
+          ? "fa-solid fa-volume-high"
+          : "fa-solid fa-volume-xmark";
+
+        button.setAttribute(
+          "aria-label",
+          GameState.settings.sound ? "ปิดเสียง" : "เปิดเสียง"
+        );
+
+        if (GameState.settings.sound) {
+          this.ensureContext();
+          this.playClick();
+        }
+
+        announce(
+          GameState.settings.sound
+            ? "เปิดเสียงแล้ว"
+            : "ปิดเสียงแล้ว"
+        );
+      }
+    };
+
+    /* =========================================================
+       9. THREE.JS BACKGROUND
+    ========================================================= */
+
+    const GraphicsSys = {
+      renderer: null,
+      scene: null,
+      camera: null,
+      stars: null,
+      planet: null,
+      animationFrame: null,
+      initialized: false,
+      quality: "high",
+
+      init() {
+        const canvas = $("#bg-canvas");
+
+        if (!canvas || typeof THREE === "undefined") {
+          console.warn("ไม่พบ Three.js ใช้พื้นหลัง CSS แทน");
+          return;
+        }
+
+        try {
+          this.scene = new THREE.Scene();
+
+          this.camera = new THREE.PerspectiveCamera(
+            58,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+          );
+          this.camera.position.z = 5;
+
+          this.renderer = new THREE.WebGLRenderer({
+            canvas,
+            alpha: true,
+            antialias: false,
+            powerPreference: "low-power"
+          });
+
+          this.renderer.setPixelRatio(
+            Math.min(window.devicePixelRatio || 1, 1.6)
+          );
+
+          this.renderer.setSize(
+            window.innerWidth,
+            window.innerHeight,
+            false
+          );
+
+          this.createStars();
+          this.createPlanet();
+
+          window.addEventListener(
+            "resize",
+            () => this.resize(),
+            { passive: true }
+          );
+
+          document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+              this.stop();
+            } else {
+              this.start();
+            }
+          });
+
+          this.initialized = true;
+          this.start();
+        } catch (error) {
+          console.warn("เริ่มระบบกราฟิกไม่สำเร็จ", error);
+          this.dispose();
+        }
+      },
+
+      createStars() {
+        if (!this.scene) return;
+
+        if (this.stars) {
+          this.scene.remove(this.stars);
+          this.stars.geometry.dispose();
+          this.stars.material.dispose();
+        }
+
+        const starCount = this.quality === "low" ? 450 : 1100;
+        const positions = new Float32Array(starCount * 3);
+
+        for (let i = 0; i < starCount; i += 1) {
+          const index = i * 3;
+
+          positions[index] = (Math.random() - 0.5) * 22;
+          positions[index + 1] = (Math.random() - 0.5) * 15;
+          positions[index + 2] = -2 - Math.random() * 17;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(positions, 3)
+        );
+
+        const material = new THREE.PointsMaterial({
+          color: 0xaeefff,
+          size: this.quality === "low" ? 0.025 : 0.035,
+          transparent: true,
+          opacity: 0.72,
+          sizeAttenuation: true
+        });
+
+        this.stars = new THREE.Points(geometry, material);
+        this.scene.add(this.stars);
+      },
+
+      createPlanet() {
+        if (!this.scene) return;
+
+        const geometry = new THREE.SphereGeometry(
+          1.35,
+          this.quality === "low" ? 20 : 38,
+          this.quality === "low" ? 14 : 28
+        );
+
+        const material = new THREE.MeshBasicMaterial({
+          color: 0x1e4d96,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.09
+        });
+
+        this.planet = new THREE.Mesh(geometry, material);
+        this.planet.position.set(3.9, -2.4, -3.5);
+
+        this.scene.add(this.planet);
+      },
+
+      setQuality(quality) {
+        this.quality = quality;
+
+        if (!this.initialized) return;
+
+        this.renderer?.setPixelRatio(
+          Math.min(
+            window.devicePixelRatio || 1,
+            quality === "low" ? 1 : 1.6
+          )
+        );
+
+        this.createStars();
+
+        if (this.planet) {
+          this.scene.remove(this.planet);
+          this.planet.geometry.dispose();
+          this.planet.material.dispose();
+          this.createPlanet();
+        }
+      },
+
+      resize() {
+        if (!this.renderer || !this.camera) return;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        this.camera.aspect = width / Math.max(1, height);
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height, false);
+      },
+
+      render() {
+        if (
+          !this.renderer ||
+          !this.scene ||
+          !this.camera ||
+          document.hidden
+        ) {
+          this.animationFrame = null;
+          return;
+        }
+
+        if (this.stars) {
+          this.stars.rotation.y +=
+            this.quality === "low" ? 0.00008 : 0.00015;
+          this.stars.rotation.x += 0.00003;
+        }
+
+        if (this.planet) {
+          this.planet.rotation.y += 0.0014;
+          this.planet.rotation.x += 0.00035;
+        }
+
+        this.renderer.render(this.scene, this.camera);
+        this.animationFrame =
+          requestAnimationFrame(() => this.render());
+      },
+
+      start() {
+        if (
+          this.renderer &&
+          !this.animationFrame &&
+          !document.hidden
+        ) {
+          this.render();
+        }
+      },
+
+      stop() {
+        if (this.animationFrame) {
+          cancelAnimationFrame(this.animationFrame);
+          this.animationFrame = null;
+        }
+      },
+
+      dispose() {
+        this.stop();
+
+        if (this.stars) {
+          this.stars.geometry.dispose();
+          this.stars.material.dispose();
+        }
+
+        if (this.planet) {
+          this.planet.geometry.dispose();
+          this.planet.material.dispose();
+        }
+
+        this.renderer?.dispose();
+
+        this.stars = null;
+        this.planet = null;
+        this.renderer = null;
+        this.scene = null;
+        this.camera = null;
+        this.initialized = false;
+      }
+    };
+
+    /* =========================================================
+       10. MENU EVENTS
+    ========================================================= */
+
+    const MenuSys = {
+      init() {
+        $("#btn-start").addEventListener("click", async () => {
+          await AudioSys.ensureContext();
+          AudioSys.playClick();
+          GameSys.prepareGame();
+        });
+
+        $("#btn-howto").addEventListener("click", () => {
+          AudioSys.playClick();
+          UISys.showScreen("screen-howto");
+        });
+
+        $("#btn-howto-back").addEventListener("click", () => {
+          AudioSys.playClick();
+          UISys.showScreen("screen-menu");
+        });
+
+        $("#btn-howto-start").addEventListener("click", async () => {
+          await AudioSys.ensureContext();
+          AudioSys.playClick();
+          GameSys.prepareGame();
+        });
+
+        $("#btn-logout").addEventListener("click", () => {
+          AudioSys.playClick();
+
+          const confirmed = window.confirm(
+            "ต้องการออกจากระบบและลบข้อมูลผู้เล่นที่บันทึกไว้หรือไม่?"
+          );
+
+          if (confirmed) {
+            LoginSys.logout();
+          }
+        });
+
+        $("#btn-sound").addEventListener("click", () => {
+          AudioSys.toggle();
+        });
+
+        $("#btn-pause").addEventListener("click", () => {
+          GameSys.pauseGame();
+        });
+
+        $("#btn-resume-game").addEventListener("click", () => {
+          GameSys.resumeGame();
+        });
+
+        $("#btn-quit-game").addEventListener("click", () => {
+          GameSys.quitGame();
+        });
+
+        $("#btn-play-again").addEventListener("click", () => {
+          GameSys.prepareGame();
+        });
+
+        $("#btn-result-menu").addEventListener("click", () => {
+          GameSys.cleanup();
+          UISys.updateMenu();
+          UISys.showScreen("screen-menu");
+        });
+
+        $("#btn-retry-save").addEventListener("click", () => {
+          BackendSys.retry();
+        });
+
+        $(".mission-card").addEventListener(
+          "pointermove",
+          (event) => {
+            if (
+              GameState.settings.effects === "low" ||
+              window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+              ).matches
+            ) {
+              return;
+            }
+
+            const card = event.currentTarget;
+            const rect = card.getBoundingClientRect();
+            const x =
+              (event.clientX - rect.left) / rect.width - 0.5;
+            const y =
+              (event.clientY - rect.top) / rect.height - 0.5;
+
+            card.style.transform =
+              `perspective(900px) rotateX(${y * -2}deg) ` +
+              `rotateY(${x * 2}deg)`;
+          }
+        );
+
+        $(".mission-card").addEventListener(
+          "pointerleave",
+          (event) => {
+            event.currentTarget.style.transform = "";
+          }
+        );
+
+        $$(".modal-backdrop").forEach((modal) => {
+          modal.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+              if (modal.id === "pause-modal") {
+                GameSys.resumeGame();
+              } else {
+                UISys.closeModal(modal.id);
+              }
+            }
+          });
+        });
+      }
+    };
+
+    /*
+      ส่วนที่ 3 ให้วางต่อจากบรรทัดนี้โดยตรง
+      ประกอบด้วย:
+      - GameSys
+      - GestureSys
+      - PoseTrackingSys
+      - BackendSys
+      - ระบบคีย์บอร์ดและ Touch
+      - การเริ่มต้นแอป
+      - ปิดแท็ก </script>, </body> และ </html>
     */
+      ASTRO EXPLORER — UPDATED SINGLE-FILE EDITION
